@@ -6,34 +6,34 @@ use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData};
 
 #[doc(hidden)]
 pub struct TupleInputHole {
-    _private: (),
+	_private: (),
 }
 
 impl TupleInputHole {
-    pub fn new_mut<'a>() -> &'a mut Self {
-        Box::leak(Box::new(TupleInputHole { _private: () }))
-    }
+	pub fn new_mut<'a>() -> &'a mut Self {
+		Box::leak(Box::new(TupleInputHole { _private: () }))
+	}
 }
 
 // First, we define a mechanism for expanding all input tuples to tuples of the same arity.
 #[doc(hidden)]
 pub trait ArityExpand<'a> {
-    type Target;
+	type Target;
 
-    fn normalize_arity(&'a mut self) -> Self::Target;
+	fn normalize_arity(&'a mut self) -> Self::Target;
 }
 
 {% for i in range(0, MAX_ARITY + 1) -%}
-impl<'a,
-    {%- for j in range(0, i) %}P{{j}}: 'a{{ '' if loop.last else ', ' }}{% endfor -%}
+impl<'a{{ ", " if i > 0 else "" }}
+	{%- for j in range(0, i) %}P{{j}}: 'a{{ '' if loop.last else ', ' }}{% endfor -%}
 > ArityExpand<'a> for (
-    {%- for j in range(0, i) %}P{{j}}{{ '' if loop.last else ', ' }}{{ "," if i == 1 else "" }}{% endfor -%}
+	{%- for j in range(0, i) %}P{{j}}{{ '' if loop.last else ', ' }}{{ "," if i == 1 else "" }}{% endfor -%}
 ) {
-    type Target = ({% for j in range(0, MAX_ARITY) %}&'a mut {{ "P" ~ j if j < i else "TupleInputHole" }}{{ '' if loop.last else ', ' }}{% endfor %});
+	type Target = ({% for j in range(0, MAX_ARITY) %}&'a mut {{ "P" ~ j if j < i else "TupleInputHole" }}{{ '' if loop.last else ', ' }}{% endfor %});
 
-    fn normalize_arity(&'a mut self) -> Self::Target {
-        ({% for j in range(0, MAX_ARITY) %}{{ "&mut self." ~ j if j < i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor %})
-    }
+	fn normalize_arity(&'a mut self) -> Self::Target {
+		({% for j in range(0, MAX_ARITY) %}{{ "&mut self." ~ j if j < i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor %})
+	}
 }
 
 {% endfor -%}
@@ -42,7 +42,7 @@ impl<'a,
 
 #[doc(hidden)]
 pub struct TupleOutputHole {
-    _private: (),
+	_private: (),
 }
 
 // Next, we define a `TupleBuilder.
@@ -59,54 +59,54 @@ pub struct TupleOutputHole {
 // In the case of a `TupleBuilder<()>`, `id` will default to expecting a value of type `TupleOutputHole`.
 #[doc(hidden)]
 pub struct TupleBuilder<T> {
-    _ty: PhantomData<T>,
+	_ty: PhantomData<T>,
 }
 
 impl<T> TupleBuilder<T> {
-    pub fn new() -> Self {
-        Self { _ty: PhantomData, }
-    }
+	pub fn new() -> Self {
+		Self { _ty: PhantomData, }
+	}
 
-    pub fn inference_helper(&self) -> Option<T> {
-        None
-    }
+	pub fn inference_helper(&self) -> Option<T> {
+		None
+	}
 }
 
 impl TupleBuilder<()> {
-    pub fn id(self, v: TupleOutputHole) -> (TupleOutputHole, Self) {
-        (v, self)
-    }
+	pub fn id(self, v: TupleOutputHole) -> (TupleOutputHole, Self) {
+		(v, self)
+	}
 }
 
 {%- for i in range(1, MAX_ARITY + 1) -%}
 
 {# Determine parameter list #}
 {%- set para_list_1plus %}{% for j in range(1, i) -%}
-    P{{j}}{{ '' if loop.last else ', ' }}
+	P{{j}}{{ '' if loop.last else ', ' }}
 {%- endfor %}{% endset -%}
 
 {%- set para_list -%}
-    P0,{{ ' ' if i > 1 else '' }}{{ para_list_1plus }}
+	P0,{{ ' ' if i > 1 else '' }}{{ para_list_1plus }}
 {%- endset -%}
 
 {# Emit actual ID method #}
 impl<{{para_list}}> TupleBuilder<({{para_list}})> {
-    pub fn id(self, v: P0) -> (P0, TupleBuilder<({{para_list_1plus}}{{ ',' if i == 2 else '' }})>) {
-        (v, TupleBuilder::new())
-    }
+	pub fn id(self, v: P0) -> (P0, TupleBuilder<({{para_list_1plus}}{{ ',' if i == 2 else '' }})>) {
+		(v, TupleBuilder::new())
+	}
 }
 {% endfor %}
 // === TupleSearch === //
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
 pub trait TupleDecompose<T, R, V> {
-    fn search(self) -> (T, R);
+	fn search(self) -> (T, R);
 }
 
 impl<T> TupleDecompose<TupleOutputHole, Self, ()> for T {
-    fn search(self) -> (TupleOutputHole, Self) {
-        (TupleOutputHole { _private: () }, self)
-    }
+	fn search(self) -> (TupleOutputHole, Self) {
+		(TupleOutputHole { _private: () }, self)
+	}
 }
 
 {% for i in range(0, MAX_ARITY) -%}
@@ -117,16 +117,16 @@ pub struct Disambiguator{{i}} { _private: () }
 
 {% for is_mut in [false, true] %}
 impl<'a, T: ?Sized, {{""}}
-    {%- for j in range(0, MAX_ARITY) %}P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
+	{%- for j in range(0, MAX_ARITY) %}P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
 > TupleDecompose<&'a {{ "mut " if is_mut else "" }}T, {{rest_tup}}, Disambiguator{{i}}> for ({%- for j in range(0, MAX_ARITY) %}{{ "&'a mut P" ~ j }}{{ '' if loop.last else ', ' }}{% endfor -%})
 where
-    P{{i}}: Borrow{{ "Mut" if is_mut else "" }}<T>,
+	P{{i}}: Borrow{{ "Mut" if is_mut else "" }}<T>,
 {
-    fn search(self) -> (&'a {{ "mut" if is_mut else "" }} T, {{rest_tup}}) {
-        ((*self.{{i}}).borrow{{ "_mut" if is_mut else "" }}(), (
-            {%- for j in range(0, MAX_ARITY) %}{{ "self." ~ j if j != i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor -%}
-        ))
-    }
+	fn search(self) -> (&'a {{ "mut" if is_mut else "" }} T, {{rest_tup}}) {
+		((*self.{{i}}).borrow{{ "_mut" if is_mut else "" }}(), (
+			{%- for j in range(0, MAX_ARITY) %}{{ "self." ~ j if j != i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor -%}
+		))
+	}
 }
 {% endfor %}
 {% endfor -%}
@@ -134,25 +134,24 @@ where
 // === Tuple Truncation === //
 
 pub trait ArityTruncate<R> {
-    fn truncate_arity(self) -> R;
+	fn truncate_arity(self) -> R;
 }
 
 {% for i in range(0, MAX_ARITY + 1) %}
-
-{% set truncate_tup -%}
+{%- set truncate_tup -%}
 ({% for j in range(0, i) %}P{{j}}{{ "" if loop.last else ", " }}{{ "," if i == 1 else "" }}{% endfor %})
 {%- endset -%}
 
 {%- set full_paras -%}
 {% for j in range(0, MAX_ARITY) %}P{{j}}{{ "" if loop.last else ", " }}{% endfor %}
 {%- endset -%}
-
 impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
-    fn truncate_arity(self) -> {{truncate_tup}} {
-        ({% for j in range(0, i) %}self.{{j}}{{"" if loop.last else ", " }}{{ "," if i == 1 else ""}}{% endfor %})
-    }
+	fn truncate_arity(self) -> {{truncate_tup}} {
+		({% for j in range(0, i) %}self.{{j}}{{"" if loop.last else ", " }}{{ "," if i == 1 else ""}}{% endfor %})
+	}
 }
-{% endfor %}
+
+{% endfor -%}
 
 // === Macro Definition === //
 
@@ -160,32 +159,35 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 
 // FIXME: Unfortunately, `normalize_arity` limits the lifetime of the decomposed tuple to the lifetime
 //  of the input tuple rather than the lifetimes of the tuple's elements.
+// FIXME: Additionally, inference breaks down if the expression's type cannot be immediately resolved
+//  (e.g. adding just one indirection between this expression and the assignment point at which the
+//   output type is known is enough to break inference entirely)
 #[macro_export]
 macro_rules! decompose {
-    ($input:expr) => {
-        {
-            use {{MACROS_PREFIX}}::ArityExpand;
-            let input = $input.normalize_arity();
-            let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
-            
-            match builder.inference_helper() {
-                {{MACROS_PREFIX}}::Some(var) => var,
-                {{MACROS_PREFIX}}::None => {
-                    {%- for j in range(0, MAX_ARITY) %}
-                    let (v, input) = {{MACROS_PREFIX}}::TupleDecompose::search(input);
-                    let (p{{j}}, builder) = builder.id(v);
-                    {% endfor %}
+	($input:expr) => {
+		{
+			use {{MACROS_PREFIX}}::ArityExpand;
+			let input = $input.normalize_arity();
+			let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
+			
+			match builder.inference_helper() {
+				{{MACROS_PREFIX}}::Some(var) => var,
+				{{MACROS_PREFIX}}::None => {
+					{%- for j in range(0, MAX_ARITY) %}
+					let (v, input) = {{MACROS_PREFIX}}::TupleDecompose::search(input);
+					let (p{{j}}, builder) = builder.id(v);
+					{% endfor %}
 
-                    let _builder = builder;
-                    let _input = input;
+					let _builder = builder;
+					let _input = input;
 
-                    {{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
-                        {%- for j in range(0, MAX_ARITY) -%}
-                        p{{j}},
-                        {%- endfor -%}
-                    ))
-                }
-            }
-        }
-    }
+					{{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
+						{%- for j in range(0, MAX_ARITY) -%}
+						p{{j}}{{ "" if loop.last else ", " }}
+						{%- endfor -%}
+					))
+				}
+			}
+		}
+	};
 }
