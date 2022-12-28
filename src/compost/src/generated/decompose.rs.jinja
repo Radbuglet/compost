@@ -7,56 +7,56 @@ use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
 pub struct TupleRemainder<T>(pub T);
 
 pub struct TupleInputHole {
-	_private: (),
+    _private: (),
 }
 
 impl TupleInputHole {
-	fn new_mut<'a>() -> &'a mut Self {
-		unsafe {
-			// Safety: ZSTs can dangle.
-			NonNull::<Self>::dangling().as_mut()
-		}
-	}
+    fn new_mut<'a>() -> &'a mut Self {
+        unsafe {
+            // Safety: ZSTs can dangle.
+            NonNull::<Self>::dangling().as_mut()
+        }
+    }
 }
 
 // First, we define a mechanism for expanding all input tuples to tuples of the same arity.
 pub trait NormalizeArity<'a> {
-	type Target;
+    type Target;
 
-	fn normalize_arity(&'a mut self) -> Self::Target;
+    fn normalize_arity(&'a mut self) -> Self::Target;
 }
 
 {% for i in range(0, MAX_ARITY + 1) -%}
 impl<'a{{ ", " if i > 0 else "" }}
-	{%- for j in range(0, i) %}P{{j}}: 'a{{ '' if loop.last else ', ' }}{% endfor -%}
+    {%- for j in range(0, i) %}P{{j}}: 'a{{ '' if loop.last else ', ' }}{% endfor -%}
 > NormalizeArity<'a> for (
-	{%- for j in range(0, i) %}P{{j}}{{ '' if loop.last else ', ' }}{{ "," if i == 1 else "" }}{% endfor -%}
+    {%- for j in range(0, i) %}P{{j}}{{ '' if loop.last else ', ' }}{{ "," if i == 1 else "" }}{% endfor -%}
 ) {
-	type Target = ({% for j in range(0, MAX_ARITY) %}&'a mut {{ "P" ~ j if j < i else "TupleInputHole" }}{{ '' if loop.last else ', ' }}{% endfor %});
+    type Target = ({% for j in range(0, MAX_ARITY) %}&'a mut {{ "P" ~ j if j < i else "TupleInputHole" }}{{ '' if loop.last else ', ' }}{% endfor %});
 
-	fn normalize_arity(&'a mut self) -> Self::Target {
-		({% for j in range(0, MAX_ARITY) %}{{ "&mut self." ~ j if j < i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor %})
-	}
+    fn normalize_arity(&'a mut self) -> Self::Target {
+        ({% for j in range(0, MAX_ARITY) %}{{ "&mut self." ~ j if j < i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor %})
+    }
 }
 
 {% endfor -%}
 
 impl<'a: 'b, 'b, {%- for j in range(0, MAX_ARITY) %}P{{j}}: 'a{{ '' if loop.last else ', ' }}{% endfor -%}> NormalizeArity<'b> for TupleRemainder<(
-	{%- for j in range(0, MAX_ARITY) %}&'a mut P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
+    {%- for j in range(0, MAX_ARITY) %}&'a mut P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
 )> {
-	type Target = ({%- for j in range(0, MAX_ARITY) %}&'b mut P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%});
+    type Target = ({%- for j in range(0, MAX_ARITY) %}&'b mut P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%});
 
-	fn normalize_arity(&'b mut self) -> Self::Target {
-		let me = &mut self.0;
+    fn normalize_arity(&'b mut self) -> Self::Target {
+        let me = &mut self.0;
 
-		({%- for j in range(0, MAX_ARITY) %}&mut me.{{j}}{{ '' if loop.last else ', ' }}{% endfor -%})
-	}
+        ({%- for j in range(0, MAX_ARITY) %}&mut me.{{j}}{{ '' if loop.last else ', ' }}{% endfor -%})
+    }
 }
 
 // === Tuple output inference === //
 
 pub struct TupleOutputHole {
-	_private: (),
+    _private: (),
 }
 
 // Next, we define a `TupleBuilder.
@@ -72,23 +72,23 @@ pub struct TupleOutputHole {
 //
 // In the case of a `TupleBuilder<()>`, `id` will default to expecting a value of type `TupleOutputHole`.
 pub struct TupleBuilder<T> {
-	_ty: PhantomData<T>,
+    _ty: PhantomData<T>,
 }
 
 impl<T> TupleBuilder<T> {
-	pub fn new() -> Self {
-		Self { _ty: PhantomData, }
-	}
+    pub fn new() -> Self {
+        Self { _ty: PhantomData, }
+    }
 
-	pub fn inference_helper(&self) -> Option<T> {
-		None
-	}
+    pub fn inference_helper(&self) -> Option<T> {
+        None
+    }
 }
 
 pub trait TupleBuilderId<V, R>: Sized {
-	fn id(self, v: V) -> (V, TupleBuilder<R>) {
-		(v, TupleBuilder::new())
-	}
+    fn id(self, v: V) -> (V, TupleBuilder<R>) {
+        (v, TupleBuilder::new())
+    }
 }
 
 impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
@@ -96,11 +96,11 @@ impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
 {% for i in range(1, MAX_ARITY + 1) -%}
 
 {%- set para_list_1plus %}{% for j in range(1, i) -%}
-	P{{j}}{{ '' if loop.last else ', ' }}
+    P{{j}}{{ '' if loop.last else ', ' }}
 {%- endfor %}{% endset -%}
 
 {%- set para_list -%}
-	P0,{{ ' ' if i > 1 else '' }}{{ para_list_1plus }}
+    P0,{{ ' ' if i > 1 else '' }}{{ para_list_1plus }}
 {%- endset -%}
 
 impl<{{para_list}}> TupleBuilderId<P0, ({{para_list_1plus}}{{ ',' if i == 2 else '' }})> for TupleBuilder<({{para_list}})> {}
@@ -110,13 +110,13 @@ impl<{{para_list}}> TupleBuilderId<P0, ({{para_list_1plus}}{{ ',' if i == 2 else
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
 pub trait TupleSearch<T, R, V> {
-	fn search(self) -> (T, R);
+    fn search(self) -> (T, R);
 }
 
 impl<T> TupleSearch<TupleOutputHole, Self, ()> for T {
-	fn search(self) -> (TupleOutputHole, Self) {
-		(TupleOutputHole { _private: () }, self)
-	}
+    fn search(self) -> (TupleOutputHole, Self) {
+        (TupleOutputHole { _private: () }, self)
+    }
 }
 
 {% for i in range(0, MAX_ARITY) -%}
@@ -127,16 +127,16 @@ pub struct Disambiguator{{i}} { _private: () }
 
 {% for is_mut in [false, true] %}
 impl<'a, T: ?Sized, {{""}}
-	{%- for j in range(0, MAX_ARITY) %}P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
+    {%- for j in range(0, MAX_ARITY) %}P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%}
 > TupleSearch<&'a {{ "mut " if is_mut else "" }}T, {{rest_tup}}, Disambiguator{{i}}> for ({%- for j in range(0, MAX_ARITY) %}{{ "&'a mut P" ~ j }}{{ '' if loop.last else ', ' }}{% endfor -%})
 where
-	P{{i}}: Borrow{{ "Mut" if is_mut else "" }}<T>,
+    P{{i}}: Borrow{{ "Mut" if is_mut else "" }}<T>,
 {
-	fn search(self) -> (&'a {{ "mut" if is_mut else "" }} T, {{rest_tup}}) {
-		((*self.{{i}}).borrow{{ "_mut" if is_mut else "" }}(), (
-			{%- for j in range(0, MAX_ARITY) %}{{ "self." ~ j if j != i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor -%}
-		))
-	}
+    fn search(self) -> (&'a {{ "mut" if is_mut else "" }} T, {{rest_tup}}) {
+        ((*self.{{i}}).borrow{{ "_mut" if is_mut else "" }}(), (
+            {%- for j in range(0, MAX_ARITY) %}{{ "self." ~ j if j != i else "TupleInputHole::new_mut()" }}{{ '' if loop.last else ', ' }}{% endfor -%}
+        ))
+    }
 }
 {% endfor %}
 {% endfor -%}
@@ -147,7 +147,7 @@ where
 // trailing `TupleOutputHole` instances emitted at the end of the tuple once all required components
 // have been acquired.
 pub trait ArityTruncate<R> {
-	fn truncate_arity(self) -> R;
+    fn truncate_arity(self) -> R;
 }
 
 {% for i in range(0, MAX_ARITY + 1) %}
@@ -159,9 +159,9 @@ pub trait ArityTruncate<R> {
 {% for j in range(0, MAX_ARITY) %}P{{j}}{{ "" if loop.last else ", " }}{% endfor %}
 {%- endset -%}
 impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
-	fn truncate_arity(self) -> {{truncate_tup}} {
-		({% for j in range(0, i) %}self.{{j}}{{"" if loop.last else ", " }}{{ "," if i == 1 else ""}}{% endfor %})
-	}
+    fn truncate_arity(self) -> {{truncate_tup}} {
+        ({% for j in range(0, i) %}self.{{j}}{{"" if loop.last else ", " }}{{ "," if i == 1 else ""}}{% endfor %})
+    }
 }
 
 {% endfor -%}
@@ -185,7 +185,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// let mut input = (1i32, &mut 2u32, 'c');
 ///
 /// fn example(cx: (&i32, &mut u32)) {
-/// 	dbg!(cx);
+///     dbg!(cx);
 /// }
 /// 
 /// // Can be used when calling a function...
@@ -210,8 +210,8 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// // to allow for backwards-compatability-preserving changes to
 /// // the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
-///		my_char: &mut char,
-/// 	my_i32: &i32,
+///     my_char: &mut char,
+///     my_i32: &i32,
 /// });
 ///
 /// dbg!((my_char, my_i32));
@@ -235,32 +235,32 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// struct MyThing1<'a>(&'a mut i32, &'a mut u32);
 ///
 /// impl<'a> MyThing1<'a> {
-///		fn new((a, b): (&'a mut i32, &'a mut u32)) -> Self {
-///			Self(a, b)
-/// 	}
+///     fn new((a, b): (&'a mut i32, &'a mut u32)) -> Self {
+///         Self(a, b)
+///     }
 /// }
 /// 
 /// #[derive(Debug)]
 /// struct MyThing2<'a>(&'a mut char);
 ///
 /// impl<'a> MyThing2<'a> {
-///		fn new((c,): (&'a mut char,)) -> Self {
-///			Self(c)
-/// 	}
+///     fn new((c,): (&'a mut char,)) -> Self {
+///         Self(c)
+///     }
 /// }
 ///
 /// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str)) {
-/// 	let (ctor_args, mut cx) = decompose!(...cx);
-/// 	let thing_1 = MyThing1::new(ctor_args);
+///     let (ctor_args, mut cx) = decompose!(...cx);
+///     let thing_1 = MyThing1::new(ctor_args);
 /// 
-/// 	let (ctor_args, mut cx) = decompose!(...cx);
-/// 	let thing_2 = MyThing2::new(ctor_args);
+///     let (ctor_args, mut cx) = decompose!(...cx);
+///     let thing_2 = MyThing2::new(ctor_args);
 ///
-///		dbg!(&thing_1);
-/// 	dbg!(&thing_2);
+///     dbg!(&thing_1);
+///     dbg!(&thing_2);
 ///
-///		let the_str: (&str,) = decompose!(cx);
-///		dbg!(the_str);
+///     let the_str: (&str,) = decompose!(cx);
+///     dbg!(the_str);
 /// }
 /// ```
 ///
@@ -271,34 +271,34 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///
 /// struct MyThing {
 /// # /*
-/// 	...
+///     ...
 /// # */
 /// }
 ///
 /// impl MyThing {
-///		pub fn do_something<'a>(&mut self, deps: (&'a u32, &'a mut i32, &'a char)) -> &'a char {
-/// 		dbg!(&deps);
-///			deps.2
-/// 	}
+///     pub fn do_something<'a>(&mut self, deps: (&'a u32, &'a mut i32, &'a char)) -> &'a char {
+///         dbg!(&deps);
+///         deps.2
+///     }
 ///
-///		pub fn do_something_else(&mut self, deps: (&u8,)) {
-/// 		dbg!(deps);
-/// 	}
+///     pub fn do_something_else(&mut self, deps: (&u8,)) {
+///         dbg!(deps);
+///     }
 /// }
 ///
 /// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char, u8)) {
-/// 	// Acquire a reference to the `MyThing` instance.
-///		decompose!(cx => cx_rest & { thing: &mut MyThing });
+///     // Acquire a reference to the `MyThing` instance.
+///     decompose!(cx => cx_rest & { thing: &mut MyThing });
 ///
-///		// Call a method on it with even more context.
-/// 	let (args, mut cx_rest) = decompose!(...cx_rest);
-/// 	let my_char = thing.do_something(args);
+///     // Call a method on it with even more context.
+///     let (args, mut cx_rest) = decompose!(...cx_rest);
+///     let my_char = thing.do_something(args);
 ///
-/// 	// Call another unrelated method without rest decomposition.
-///		thing.do_something_else(decompose!(cx_rest));
-///	
-///		// `my_char` remains valid!
-///		dbg!(my_char);
+///     // Call another unrelated method without rest decomposition.
+///     thing.do_something_else(decompose!(cx_rest));
+/// 
+///     // `my_char` remains valid!
+///     dbg!(my_char);
 /// }
 /// ```
 ///
@@ -310,8 +310,8 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example(cx: (&i32, &u32)) {
-///		decompose!(cx => { my_i32: &i32 });
-///		dbg!(my_i32);
+///     decompose!(cx => { my_i32: &i32 });
+///     dbg!(my_i32);
 /// }
 /// ```
 ///
@@ -321,8 +321,8 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example(mut cx: (&i32, &u32)) {  // (see how the `cx` variable itself is now mut?)
-///		decompose!(cx => { my_i32: &i32 });
-///		dbg!(my_i32);
+///     decompose!(cx => { my_i32: &i32 });
+///     dbg!(my_i32);
 /// }
 /// ```
 ///
@@ -334,11 +334,11 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn takes_cx(cx: &i32) {
-/// 	dbg!(cx);
+///     dbg!(cx);
 /// }
 /// 
-///	fn example(mut cx: (&i32, &u32)) {
-/// 	takes_cx(decompose!(cx));
+/// fn example(mut cx: (&i32, &u32)) {
+///     takes_cx(decompose!(cx));
 /// }
 /// ```
 ///
@@ -348,11 +348,11 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn takes_cx(cx: (&i32,)) {  // (notice the trailing comma?)
-/// 	dbg!(cx);
+///     dbg!(cx);
 /// }
 /// 
-///	fn example(mut cx: (&i32, &u32)) {
-/// 	takes_cx(decompose!(cx));
+/// fn example(mut cx: (&i32, &u32)) {
+///     takes_cx(decompose!(cx));
 /// }
 /// ```
 ///
@@ -370,10 +370,10 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example<T: Borrow<V>, V>(mut cx: (T,)) {
-///		decompose!(cx => { v: &V });
+///     decompose!(cx => { v: &V });
 ///
-/// 	// Of course, you can still borrow the original value as well...
-/// 	decompose!(cx => { v: &mut T });
+///     // Of course, you can still borrow the original value as well...
+///     decompose!(cx => { v: &mut T });
 /// }
 /// ```
 ///
@@ -387,9 +387,9 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///
 /// fn example<'a, T, V>(mut cx: (&'a mut T,))
 /// where
-///		&'a mut T: Borrow<V>,
+///     &'a mut T: Borrow<V>,
 ///  {
-///		decompose!(cx => { v: &V });
+///     decompose!(cx => { v: &V });
 /// }
 /// ```
 ///
@@ -401,11 +401,11 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example(mut cx: (&i32, &mut i32, &u32, Box<u32>)) {
-/// 	decompose!(cx => {
-///			my_i32: &i32,
-///			my_u32: &u32,
-/// 	});
-/// 	dbg!((my_i32, my_u32));
+///     decompose!(cx => {
+///         my_i32: &i32,
+///         my_u32: &u32,
+///     });
+///     dbg!((my_i32, my_u32));
 /// }
 /// ```
 ///
@@ -415,16 +415,16 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example(mut cx: (&i32, &mut i32, &u32, Box<u32>, &char, &char, &char)) {
-/// 	decompose!(cx => {
-///			// There's only one element in the input tuple that can give a **mutable
-/// 		// reference** to these respective elements.
-///			my_i32: &mut i32,
-///			my_u32: &mut u32,
-/// 		
-///			// Also, even though `&char` shows up *thrice* in the context tuple, it
-///			// is not used anywhere in the decomposition so it is fine.
-/// 	});
-/// 	dbg!((my_i32, my_u32));
+///     decompose!(cx => {
+///         // There's only one element in the input tuple that can give a **mutable
+///         // reference** to these respective elements.
+///         my_i32: &mut i32,
+///         my_u32: &mut u32,
+///         
+///         // Also, even though `&char` shows up *thrice* in the context tuple, it
+///         // is not used anywhere in the decomposition so it is fine.
+///     });
+///     dbg!((my_i32, my_u32));
 /// }
 /// ```
 ///
@@ -435,13 +435,13 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn example(mut cx: (&i32, &u32)) {
-///		// This works well but...
-///		decompose!(cx => rest & { my_first_i32_ref: &i32 });
-///	
-/// 	// This fails!
-/// 	decompose!(rest => { my_second_i32_ref: &i32 });
+///     // This works well but...
+///     decompose!(cx => rest & { my_first_i32_ref: &i32 });
+/// 
+///     // This fails!
+///     decompose!(rest => { my_second_i32_ref: &i32 });
 ///
-///		dbg!((my_first_i32_ref, my_second_i32_ref));
+///     dbg!((my_first_i32_ref, my_second_i32_ref));
 /// }
 /// ```
 ///
@@ -462,55 +462,55 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// use compost::decompose;
 ///
 /// fn give_me_some_things<'a>(mut cx: (&'a u32, &'a mut i32)) -> (&'a u32, &'a i32) {
-///		decompose!(cx)
+///     decompose!(cx)
 /// }
 /// ```
 #[macro_export]
 macro_rules! decompose {
-	(...$input:expr) => {
-		{
-			use {{MACROS_PREFIX}}::NormalizeArity;
-			let input = $input.normalize_arity();
-			let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
-			
-			match builder.inference_helper() {
-				{{MACROS_PREFIX}}::Some(var) => {
-					fn any<T>() -> T {
-						loop {}
-					}
-					(var, any())
-				},
-				{{MACROS_PREFIX}}::None => {
-					{%- for j in range(0, MAX_ARITY) %}
-					let (v, input) = {{MACROS_PREFIX}}::TupleSearch::search(input);
-					let (p{{j}}, builder) = {{MACROS_PREFIX}}::TupleBuilderId::id(builder, v);
-					{% endfor %}
+    (...$input:expr) => {
+        {
+            use {{MACROS_PREFIX}}::NormalizeArity;
+            let input = $input.normalize_arity();
+            let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
+            
+            match builder.inference_helper() {
+                {{MACROS_PREFIX}}::Some(var) => {
+                    fn any<T>() -> T {
+                        loop {}
+                    }
+                    (var, any())
+                },
+                {{MACROS_PREFIX}}::None => {
+                    {%- for j in range(0, MAX_ARITY) %}
+                    let (v, input) = {{MACROS_PREFIX}}::TupleSearch::search(input);
+                    let (p{{j}}, builder) = {{MACROS_PREFIX}}::TupleBuilderId::id(builder, v);
+                    {% endfor %}
 
-					let _builder = builder;
+                    let _builder = builder;
 
-					({{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
-						{%- for j in range(0, MAX_ARITY) -%}
-						p{{j}}{{ "" if loop.last else ", " }}
-						{%- endfor -%}
-					)), {{MACROS_PREFIX}}::TupleRemainder(input))
-				}
-			}
-		}
-	};
-	($input:expr) => {
-		$crate::decompose!(...$input).0
-	};
-	($input:expr => $rest:ident & {
-		$($name:ident: $ty:ty),*
-		$(,)?
-	}) => {
-		#[allow(unnecessary_mut)]
-		let (($($name,)*), mut $rest): (($($ty,)*), _) = $crate::decompose!(...$input);
-	};
-	($input:expr => {
-		$($name:ident: $ty:ty),*
-		$(,)?
-	}) => {
-		$crate::decompose!($input => _ignored & { $($name:$ty),* });
-	}
+                    ({{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
+                        {%- for j in range(0, MAX_ARITY) -%}
+                        p{{j}}{{ "" if loop.last else ", " }}
+                        {%- endfor -%}
+                    )), {{MACROS_PREFIX}}::TupleRemainder(input))
+                }
+            }
+        }
+    };
+    ($input:expr) => {
+        $crate::decompose!(...$input).0
+    };
+    ($input:expr => $rest:ident & {
+        $($name:ident: $ty:ty),*
+        $(,)?
+    }) => {
+        #[allow(unnecessary_mut)]
+        let (($($name,)*), mut $rest): (($($ty,)*), _) = $crate::decompose!(...$input);
+    };
+    ($input:expr => {
+        $($name:ident: $ty:ty),*
+        $(,)?
+    }) => {
+        $crate::decompose!($input => _ignored & { $($name:$ty),* });
+    }
 }
