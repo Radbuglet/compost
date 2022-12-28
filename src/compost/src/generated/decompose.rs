@@ -175,84 +175,26 @@ impl<T> TupleBuilder<T> {
 	}
 }
 
-impl TupleBuilder<()> {
-	pub fn id(self, v: TupleOutputHole) -> (TupleOutputHole, Self) {
-		(v, self)
-	}
-}
-
-impl<P0,> TupleBuilder<(P0,)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<()>) {
+pub trait TupleBuilderId<V, R>: Sized {
+	fn id(self, v: V) -> (V, TupleBuilder<R>) {
 		(v, TupleBuilder::new())
 	}
 }
 
-impl<P0, P1> TupleBuilder<(P0, P1)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1,)>) {
-		(v, TupleBuilder::new())
-	}
-}
+impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
 
-impl<P0, P1, P2> TupleBuilder<(P0, P1, P2)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3> TupleBuilder<(P0, P1, P2, P3)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4> TupleBuilder<(P0, P1, P2, P3, P4)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5> TupleBuilder<(P0, P1, P2, P3, P4, P5)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6, P7> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6, P7)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6, P7, P8> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6, P7, P8)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6, P7, P8, P9)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
-impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)> {
-	pub fn id(self, v: P0) -> (P0, TupleBuilder<(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)>) {
-		(v, TupleBuilder::new())
-	}
-}
-
+impl<P0,> TupleBuilderId<P0, ()> for TupleBuilder<(P0,)> {}
+impl<P0, P1> TupleBuilderId<P0, (P1,)> for TupleBuilder<(P0, P1)> {}
+impl<P0, P1, P2> TupleBuilderId<P0, (P1, P2)> for TupleBuilder<(P0, P1, P2)> {}
+impl<P0, P1, P2, P3> TupleBuilderId<P0, (P1, P2, P3)> for TupleBuilder<(P0, P1, P2, P3)> {}
+impl<P0, P1, P2, P3, P4> TupleBuilderId<P0, (P1, P2, P3, P4)> for TupleBuilder<(P0, P1, P2, P3, P4)> {}
+impl<P0, P1, P2, P3, P4, P5> TupleBuilderId<P0, (P1, P2, P3, P4, P5)> for TupleBuilder<(P0, P1, P2, P3, P4, P5)> {}
+impl<P0, P1, P2, P3, P4, P5, P6> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6)> {}
+impl<P0, P1, P2, P3, P4, P5, P6, P7> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7)> {}
+impl<P0, P1, P2, P3, P4, P5, P6, P7, P8> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8)> {}
+impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9)> {}
+impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)> {}
+impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)> {}
 // === Tuple searching === //
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
@@ -769,29 +711,11 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// ## Caveats
 ///
-/// First, because variadic tuples are not a thing yet, the maximum arity of (number of elements in)
+/// **Caveat 1:** Because variadic tuples are not a thing yet, the maximum arity of (number of elements in)
 /// both the input and output tuples is **12**. This value is configurable in the source code
 /// (see: `src/generated/decompose.rs.jinja`'s `MAX_ARITY` template variable).
 ///
-/// Additionally, because of inference jank, the type of the tuple being decomposed into must be known
-/// immediately outside the macro. Thus, even though the type of `cx_subset` is trivially inferrable
-/// in this example, Rust's inference engine will choke because the type of the place to which the
-/// expression result is being assigned is not immediately known.
-///
-/// ```compile_fail
-/// use compost::decompose;
-///
-/// let mut input = (1i32, &mut 2u32, 'c');
-///
-/// fn example(cx: (&i32, &mut u32)) {
-/// 	dbg!(cx);
-/// }
-///
-/// let cx_subset = decompose!(input);  // (oh no!)
-/// example(cx_subset);
-/// ```
-///
-/// Finally, because `decompose!` consumes a mutable reference to the tuple being decomposed:
+/// **Caveat 2:** Because `decompose!` consumes a mutable reference to the tuple being decomposed:
 ///
 /// 1. The tuple must be marked as mutable (but you already knew that).
 /// 2. Tuple temporaries cannot be decomposed and returned from the function.
@@ -817,40 +741,40 @@ macro_rules! decompose {
 				$crate::macros::Some(var) => var,
 				$crate::macros::None => {
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p0, builder) = builder.id(v);
+					let (p0, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p1, builder) = builder.id(v);
+					let (p1, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p2, builder) = builder.id(v);
+					let (p2, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p3, builder) = builder.id(v);
+					let (p3, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p4, builder) = builder.id(v);
+					let (p4, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p5, builder) = builder.id(v);
+					let (p5, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p6, builder) = builder.id(v);
+					let (p6, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p7, builder) = builder.id(v);
+					let (p7, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p8, builder) = builder.id(v);
+					let (p8, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p9, builder) = builder.id(v);
+					let (p9, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p10, builder) = builder.id(v);
+					let (p10, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p11, builder) = builder.id(v);
+					let (p11, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 
 					let _builder = builder;
@@ -876,40 +800,40 @@ macro_rules! decompose {
 				$crate::macros::Some(var) => (var, loop {}),
 				$crate::macros::None => {
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p0, builder) = builder.id(v);
+					let (p0, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p1, builder) = builder.id(v);
+					let (p1, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p2, builder) = builder.id(v);
+					let (p2, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p3, builder) = builder.id(v);
+					let (p3, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p4, builder) = builder.id(v);
+					let (p4, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p5, builder) = builder.id(v);
+					let (p5, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p6, builder) = builder.id(v);
+					let (p6, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p7, builder) = builder.id(v);
+					let (p7, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p8, builder) = builder.id(v);
+					let (p8, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p9, builder) = builder.id(v);
+					let (p9, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p10, builder) = builder.id(v);
+					let (p10, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p11, builder) = builder.id(v);
+					let (p11, builder) = $crate::macros::TupleBuilderId::id(builder, v);
 					
 
 					let _builder = builder;
