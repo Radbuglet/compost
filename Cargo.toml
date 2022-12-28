@@ -1,2 +1,2 @@
 [workspace]
-members = ["src/codegen", "src/decompose"]
+members = ["src/codegen", "src/compost"]

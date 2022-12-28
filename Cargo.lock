@@ -9,11 +9,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
-name = "decompose"
+name = "compost"
 version = "0.1.0"
 
 [[package]]
-name = "decompose-codegen"
+name = "compost-codegen"
 version = "0.1.0"
 dependencies = [
  "anyhow",

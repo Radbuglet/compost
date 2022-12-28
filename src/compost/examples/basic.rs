@@ -31,7 +31,7 @@ fn main() {
 }
 
 fn example<T, V>(mut a: (MyRefMut<u32>, &mut i32, char, &str, &mut T, V)) {
-	example_2(decompose::decompose!(a));
+	example_2(compost::decompose!(a));
 }
 
 fn example_2(a: (&u32, &i32, &char)) {
