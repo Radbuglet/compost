@@ -3,25 +3,28 @@ use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData};
 // === Tuple Expansion === //
 
 #[doc(hidden)]
+pub struct TupleRemainder<T>(pub T);
+
+#[doc(hidden)]
 pub struct TupleInputHole {
 	_private: (),
 }
 
 impl TupleInputHole {
-	pub fn new_mut<'a>() -> &'a mut Self {
+	fn new_mut<'a>() -> &'a mut Self {
 		Box::leak(Box::new(TupleInputHole { _private: () }))
 	}
 }
 
 // First, we define a mechanism for expanding all input tuples to tuples of the same arity.
 #[doc(hidden)]
-pub trait ArityExpand<'a> {
+pub trait NormalizeArity<'a> {
 	type Target;
 
 	fn normalize_arity(&'a mut self) -> Self::Target;
 }
 
-impl<'a> ArityExpand<'a> for () {
+impl<'a> NormalizeArity<'a> for () {
 	type Target = (&'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -29,7 +32,7 @@ impl<'a> ArityExpand<'a> for () {
 	}
 }
 
-impl<'a, P0: 'a> ArityExpand<'a> for (P0,) {
+impl<'a, P0: 'a> NormalizeArity<'a> for (P0,) {
 	type Target = (&'a mut P0, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -37,7 +40,7 @@ impl<'a, P0: 'a> ArityExpand<'a> for (P0,) {
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a> ArityExpand<'a> for (P0, P1) {
+impl<'a, P0: 'a, P1: 'a> NormalizeArity<'a> for (P0, P1) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -45,7 +48,7 @@ impl<'a, P0: 'a, P1: 'a> ArityExpand<'a> for (P0, P1) {
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a> ArityExpand<'a> for (P0, P1, P2) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a> NormalizeArity<'a> for (P0, P1, P2) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -53,7 +56,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a> ArityExpand<'a> for (P0, P1, P2) {
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a> ArityExpand<'a> for (P0, P1, P2, P3) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a> NormalizeArity<'a> for (P0, P1, P2, P3) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -61,7 +64,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a> ArityExpand<'a> for (P0, P1, P2, P3) {
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -69,7 +72,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a> ArityExpand<'a> for (P0, P1, P2
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -77,7 +80,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a> ArityExpand<'a> for (P0
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -85,7 +88,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a> ArityExpand<'a>
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6, P7) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6, P7) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -93,7 +96,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a> ArityEx
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut TupleInputHole, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -101,7 +104,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a>
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut TupleInputHole, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -109,7 +112,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a,
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a, P10: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a, P10: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut TupleInputHole);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -117,7 +120,7 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a,
 	}
 }
 
-impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a, P10: 'a, P11: 'a> ArityExpand<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
+impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a, P10: 'a, P11: 'a> NormalizeArity<'a> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
 	type Target = (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11);
 
 	fn normalize_arity(&'a mut self) -> Self::Target {
@@ -125,7 +128,17 @@ impl<'a, P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a,
 	}
 }
 
-// === TupleBuilder === //
+impl<'a: 'b, 'b,P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, P8: 'a, P9: 'a, P10: 'a, P11: 'a> NormalizeArity<'b> for TupleRemainder<(&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)> {
+	type Target = (&'b mut P0, &'b mut P1, &'b mut P2, &'b mut P3, &'b mut P4, &'b mut P5, &'b mut P6, &'b mut P7, &'b mut P8, &'b mut P9, &'b mut P10, &'b mut P11);
+
+	fn normalize_arity(&'b mut self) -> Self::Target {
+		let me = &mut self.0;
+
+		(&mut me.0, &mut me.1, &mut me.2, &mut me.3, &mut me.4, &mut me.5, &mut me.6, &mut me.7, &mut me.8, &mut me.9, &mut me.10, &mut me.11)
+	}
+}
+
+// === Tuple output inference === //
 
 #[doc(hidden)]
 pub struct TupleOutputHole {
@@ -164,6 +177,7 @@ impl TupleBuilder<()> {
 		(v, self)
 	}
 }
+
 impl<P0,> TupleBuilder<(P0,)> {
 	pub fn id(self, v: P0) -> (P0, TupleBuilder<()>) {
 		(v, TupleBuilder::new())
@@ -236,14 +250,14 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleBuilder<(P0, P1, P2,
 	}
 }
 
-// === TupleSearch === //
+// === Tuple searching === //
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
-pub trait TupleDecompose<T, R, V> {
+pub trait TupleSearch<T, R, V> {
 	fn search(self) -> (T, R);
 }
 
-impl<T> TupleDecompose<TupleOutputHole, Self, ()> for T {
+impl<T> TupleSearch<TupleOutputHole, Self, ()> for T {
 	fn search(self) -> (TupleOutputHole, Self) {
 		(TupleOutputHole { _private: () }, self)
 	}
@@ -251,7 +265,7 @@ impl<T> TupleDecompose<TupleOutputHole, Self, ()> for T {
 
 pub struct Disambiguator0 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut TupleInputHole, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator0> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut TupleInputHole, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator0> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P0: Borrow<T>,
 {
@@ -260,7 +274,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut TupleInputHole, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator0> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut TupleInputHole, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator0> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P0: BorrowMut<T>,
 {
@@ -271,7 +285,7 @@ where
 
 pub struct Disambiguator1 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut TupleInputHole, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator1> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut TupleInputHole, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator1> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P1: Borrow<T>,
 {
@@ -280,7 +294,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut TupleInputHole, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator1> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut TupleInputHole, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator1> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P1: BorrowMut<T>,
 {
@@ -291,7 +305,7 @@ where
 
 pub struct Disambiguator2 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut TupleInputHole, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator2> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut TupleInputHole, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator2> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P2: Borrow<T>,
 {
@@ -300,7 +314,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut TupleInputHole, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator2> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut TupleInputHole, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator2> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P2: BorrowMut<T>,
 {
@@ -311,7 +325,7 @@ where
 
 pub struct Disambiguator3 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut TupleInputHole, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator3> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut TupleInputHole, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator3> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P3: Borrow<T>,
 {
@@ -320,7 +334,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut TupleInputHole, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator3> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut TupleInputHole, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator3> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P3: BorrowMut<T>,
 {
@@ -331,7 +345,7 @@ where
 
 pub struct Disambiguator4 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut TupleInputHole, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator4> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut TupleInputHole, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator4> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P4: Borrow<T>,
 {
@@ -340,7 +354,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut TupleInputHole, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator4> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut TupleInputHole, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator4> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P4: BorrowMut<T>,
 {
@@ -351,7 +365,7 @@ where
 
 pub struct Disambiguator5 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut TupleInputHole, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator5> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut TupleInputHole, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator5> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P5: Borrow<T>,
 {
@@ -360,7 +374,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut TupleInputHole, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator5> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut TupleInputHole, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator5> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P5: BorrowMut<T>,
 {
@@ -371,7 +385,7 @@ where
 
 pub struct Disambiguator6 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut TupleInputHole, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator6> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut TupleInputHole, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator6> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P6: Borrow<T>,
 {
@@ -380,7 +394,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut TupleInputHole, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator6> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut TupleInputHole, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator6> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P6: BorrowMut<T>,
 {
@@ -391,7 +405,7 @@ where
 
 pub struct Disambiguator7 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut TupleInputHole, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator7> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut TupleInputHole, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator7> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P7: Borrow<T>,
 {
@@ -400,7 +414,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut TupleInputHole, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator7> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut TupleInputHole, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator7> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P7: BorrowMut<T>,
 {
@@ -411,7 +425,7 @@ where
 
 pub struct Disambiguator8 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut TupleInputHole, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator8> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut TupleInputHole, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator8> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P8: Borrow<T>,
 {
@@ -420,7 +434,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut TupleInputHole, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator8> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut TupleInputHole, &'a mut P9, &'a mut P10, &'a mut P11), Disambiguator8> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P8: BorrowMut<T>,
 {
@@ -431,7 +445,7 @@ where
 
 pub struct Disambiguator9 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut TupleInputHole, &'a mut P10, &'a mut P11), Disambiguator9> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut TupleInputHole, &'a mut P10, &'a mut P11), Disambiguator9> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P9: Borrow<T>,
 {
@@ -440,7 +454,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut TupleInputHole, &'a mut P10, &'a mut P11), Disambiguator9> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut TupleInputHole, &'a mut P10, &'a mut P11), Disambiguator9> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P9: BorrowMut<T>,
 {
@@ -451,7 +465,7 @@ where
 
 pub struct Disambiguator10 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut TupleInputHole, &'a mut P11), Disambiguator10> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut TupleInputHole, &'a mut P11), Disambiguator10> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P10: Borrow<T>,
 {
@@ -460,7 +474,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut TupleInputHole, &'a mut P11), Disambiguator10> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut TupleInputHole, &'a mut P11), Disambiguator10> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P10: BorrowMut<T>,
 {
@@ -471,7 +485,7 @@ where
 
 pub struct Disambiguator11 { _private: () }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut TupleInputHole), Disambiguator11> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut TupleInputHole), Disambiguator11> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P11: Borrow<T>,
 {
@@ -480,7 +494,7 @@ where
 	}
 }
 
-impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleDecompose<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut TupleInputHole), Disambiguator11> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
+impl<'a, T: ?Sized, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleSearch<&'a mut T, (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut TupleInputHole), Disambiguator11> for (&'a mut P0, &'a mut P1, &'a mut P2, &'a mut P3, &'a mut P4, &'a mut P5, &'a mut P6, &'a mut P7, &'a mut P8, &'a mut P9, &'a mut P10, &'a mut P11)
 where
 	P11: BorrowMut<T>,
 {
@@ -489,7 +503,7 @@ where
 	}
 }
 
-// === Tuple Truncation === //
+// === Tuple truncation === //
 
 pub trait ArityTruncate<R> {
 	fn truncate_arity(self) -> R;
@@ -573,7 +587,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 	}
 }
 
-// === Macro Definition === //
+// === Macro definition === //
 
 // FIXME: Unfortunately, `normalize_arity` limits the lifetime of the decomposed tuple to the lifetime
 //  of the input tuple rather than the lifetimes of the tuple's elements.
@@ -582,49 +596,50 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 //   output type is known is enough to break inference entirely)
 #[macro_export]
 macro_rules! decompose {
+	
 	($input:expr) => {
 		{
-			use $crate::macros::ArityExpand;
+			use $crate::macros::NormalizeArity;
 			let input = $input.normalize_arity();
 			let builder = $crate::macros::TupleBuilder::new();
 			
 			match builder.inference_helper() {
 				$crate::macros::Some(var) => var,
 				$crate::macros::None => {
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p0, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p1, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p2, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p3, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p4, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p5, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p6, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p7, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p8, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p9, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p10, builder) = builder.id(v);
 					
-					let (v, input) = $crate::macros::TupleDecompose::search(input);
+					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p11, builder) = builder.id(v);
 					
 
@@ -636,4 +651,68 @@ macro_rules! decompose {
 			}
 		}
 	};
+	($input:expr => $rest:ident & {
+		$($name:ident: $ty:ty),*
+		$(,)?
+	}) => {
+		#[allow(unnecessary_mut)]
+		let (($($name,)*), mut $rest): (($($ty,)*), _) = {
+			use $crate::macros::NormalizeArity;
+			let input = $input.normalize_arity();
+			let builder = $crate::macros::TupleBuilder::new();
+			
+			match builder.inference_helper() {
+				#[allow(unreachable_code)]
+				$crate::macros::Some(var) => (var, loop {}),
+				$crate::macros::None => {
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p0, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p1, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p2, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p3, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p4, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p5, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p6, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p7, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p8, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p9, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p10, builder) = builder.id(v);
+					
+					let (v, input) = $crate::macros::TupleSearch::search(input);
+					let (p11, builder) = builder.id(v);
+					
+
+					let _builder = builder;
+
+					($crate::macros::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)), $crate::macros::TupleRemainder(input))
+				}
+			}
+		};
+	};
+	($input:expr => {
+		$($name:ident: $ty:ty),*
+		$(,)?
+	}) => {
+		$crate::decompose!($input => _ignored & { $($name:$ty),* });
+	}
 }

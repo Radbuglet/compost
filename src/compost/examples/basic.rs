@@ -1,6 +1,7 @@
 use std::{
 	borrow::{Borrow, BorrowMut},
 	cell::{RefCell, RefMut},
+	fmt,
 };
 
 struct MyRefMut<'a, T: ?Sized>(RefMut<'a, T>);
@@ -30,8 +31,13 @@ fn main() {
 	))
 }
 
-fn example<T, V>(mut a: (MyRefMut<u32>, &mut i32, char, &str, &mut T, V)) {
+fn example<T, V: fmt::Debug>(mut a: (MyRefMut<u32>, &mut i32, char, &str, &mut T, V)) {
 	example_2(compost::decompose!(a));
+
+	compost::decompose!(a => b & { v0: &char });
+	compost::decompose!(b => { v1: &str, v2: &mut V });
+
+	dbg!((v0, v1, v2));
 }
 
 fn example_2(a: (&u32, &i32, &char)) {
