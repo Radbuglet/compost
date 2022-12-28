@@ -2,10 +2,8 @@ use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
 
 // === Tuple Expansion === //
 
-#[doc(hidden)]
 pub struct TupleRemainder<T>(pub T);
 
-#[doc(hidden)]
 pub struct TupleInputHole {
 	_private: (),
 }
@@ -20,7 +18,6 @@ impl TupleInputHole {
 }
 
 // First, we define a mechanism for expanding all input tuples to tuples of the same arity.
-#[doc(hidden)]
 pub trait NormalizeArity<'a> {
 	type Target;
 
@@ -143,7 +140,6 @@ impl<'a: 'b, 'b,P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, 
 
 // === Tuple output inference === //
 
-#[doc(hidden)]
 pub struct TupleOutputHole {
 	_private: (),
 }
@@ -160,7 +156,6 @@ pub struct TupleOutputHole {
 // method.
 //
 // In the case of a `TupleBuilder<()>`, `id` will default to expecting a value of type `TupleOutputHole`.
-#[doc(hidden)]
 pub struct TupleBuilder<T> {
 	_ty: PhantomData<T>,
 }
@@ -573,7 +568,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// // a `rest` value containing the remaining components.
 /// //
 /// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
-/// // is new-typed in a macro-internal `TupleRemainder` struct.
+/// // is new-typed in a macro-internal `TupleRemainder` struct
+/// // to allow for backwards-compatability-preserving changes to
+/// // the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
 ///		my_char: &mut char,
 /// 	my_i32: &i32,
@@ -645,19 +642,24 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// 		dbg!(&deps);
 ///			deps.2
 /// 	}
+///
+///		pub fn do_something_else(&mut self, deps: (&u8,)) {
+/// 		dbg!(deps);
+/// 	}
 /// }
 ///
 /// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char, u8)) {
+/// 	// Acquire a reference to the `MyThing` instance.
 ///		decompose!(cx => cx_rest & { thing: &mut MyThing });
 ///
+///		// Call a method on it with even more context.
 /// 	let (args, mut cx_rest) = decompose!(...cx_rest);
 /// 	let my_char = thing.do_something(args);
 ///
-/// 	decompose!(cx_rest => { my_u8: &u8 });
-///		dbg!(my_u8);
-///		dbg!(my_char);
-///
-/// 	decompose!(cx => { my_char: &char });
+/// 	// Call another unrelated method without rest decomposition.
+///		thing.do_something_else(decompose!(cx_rest));
+///	
+///		// `my_char` remains valid!
 ///		dbg!(my_char);
 /// }
 /// ```
@@ -829,58 +831,58 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 macro_rules! decompose {
 	(...$input:expr) => {
 		{
-			use $crate::macros::NormalizeArity;
+			use $crate::macro_internal::NormalizeArity;
 			let input = $input.normalize_arity();
-			let builder = $crate::macros::TupleBuilder::new();
+			let builder = $crate::macro_internal::TupleBuilder::new();
 			
 			match builder.inference_helper() {
-				$crate::macros::Some(var) => {
+				$crate::macro_internal::Some(var) => {
 					fn any<T>() -> T {
 						loop {}
 					}
 					(var, any())
 				},
-				$crate::macros::None => {
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p0, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+				$crate::macro_internal::None => {
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p0, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p1, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p1, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p2, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p2, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p3, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p3, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p4, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p4, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p5, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p5, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p6, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p6, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p7, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p7, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p8, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p8, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p9, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p9, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p10, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p10, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p11, builder) = $crate::macros::TupleBuilderId::id(builder, v);
+					let (v, input) = $crate::macro_internal::TupleSearch::search(input);
+					let (p11, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
 					
 
 					let _builder = builder;
 
-					($crate::macros::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)), $crate::macros::TupleRemainder(input))
+					($crate::macro_internal::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)), $crate::macro_internal::TupleRemainder(input))
 				}
 			}
 		}

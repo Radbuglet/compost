@@ -4,10 +4,8 @@ use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
 
 // === Tuple Expansion === //
 
-#[doc(hidden)]
 pub struct TupleRemainder<T>(pub T);
 
-#[doc(hidden)]
 pub struct TupleInputHole {
 	_private: (),
 }
@@ -22,7 +20,6 @@ impl TupleInputHole {
 }
 
 // First, we define a mechanism for expanding all input tuples to tuples of the same arity.
-#[doc(hidden)]
 pub trait NormalizeArity<'a> {
 	type Target;
 
@@ -58,7 +55,6 @@ impl<'a: 'b, 'b, {%- for j in range(0, MAX_ARITY) %}P{{j}}: 'a{{ '' if loop.last
 
 // === Tuple output inference === //
 
-#[doc(hidden)]
 pub struct TupleOutputHole {
 	_private: (),
 }
@@ -75,7 +71,6 @@ pub struct TupleOutputHole {
 // method.
 //
 // In the case of a `TupleBuilder<()>`, `id` will default to expecting a value of type `TupleOutputHole`.
-#[doc(hidden)]
 pub struct TupleBuilder<T> {
 	_ty: PhantomData<T>,
 }
@@ -173,7 +168,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 
 // === Macro definition === //
 
-{% set MACROS_PREFIX = "$crate::macros" -%}
+{% set MACROS_PREFIX = "$crate::macro_internal" -%}
 
 /// This macro takes a **mutable reference** to a tuple and decomposes it into a sub-tuple
 /// (i.e. a tuple containing a subset of the values contained in the parent tuple).
@@ -211,7 +206,9 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// // a `rest` value containing the remaining components.
 /// //
 /// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
-/// // is new-typed in a macro-internal `TupleRemainder` struct.
+/// // is new-typed in a macro-internal `TupleRemainder` struct
+/// // to allow for backwards-compatability-preserving changes to
+/// // the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
 ///		my_char: &mut char,
 /// 	my_i32: &i32,
@@ -283,19 +280,24 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// 		dbg!(&deps);
 ///			deps.2
 /// 	}
+///
+///		pub fn do_something_else(&mut self, deps: (&u8,)) {
+/// 		dbg!(deps);
+/// 	}
 /// }
 ///
 /// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char, u8)) {
+/// 	// Acquire a reference to the `MyThing` instance.
 ///		decompose!(cx => cx_rest & { thing: &mut MyThing });
 ///
+///		// Call a method on it with even more context.
 /// 	let (args, mut cx_rest) = decompose!(...cx_rest);
 /// 	let my_char = thing.do_something(args);
 ///
-/// 	decompose!(cx_rest => { my_u8: &u8 });
-///		dbg!(my_u8);
-///		dbg!(my_char);
-///
-/// 	decompose!(cx => { my_char: &char });
+/// 	// Call another unrelated method without rest decomposition.
+///		thing.do_something_else(decompose!(cx_rest));
+///	
+///		// `my_char` remains valid!
 ///		dbg!(my_char);
 /// }
 /// ```

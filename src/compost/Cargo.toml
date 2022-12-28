@@ -1,6 +1,10 @@
 [package]
 name = "compost"
 version = "0.1.0"
+description = "decomposes tuples into tuples containing a subset of their values"
+categories = ["rust-patterns", "no-std"]
+license = "MIT"
+repository = "https://github.com/Radbuglet/compost"
 edition = "2021"
 
 [dependencies]

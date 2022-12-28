@@ -52,7 +52,7 @@
 mod decompose;
 
 #[doc(hidden)]
-pub mod macros {
+pub mod macro_internal {
 	pub use super::decompose::*;
 	pub use core::option::Option::{None, Some};
 }
