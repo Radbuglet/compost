@@ -590,6 +590,8 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 
 // === Macro Definition === //
 
+// FIXME: Unfortunately, `normalize_arity` limits the lifetime of the decomposed tuple to the lifetime
+//  of the input tuple rather than the lifetimes of the tuple's elements.
 #[macro_export]
 macro_rules! decompose {
     ($input:expr) => {

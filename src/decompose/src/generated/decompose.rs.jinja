@@ -103,7 +103,6 @@ pub trait TupleDecompose<T, R, V> {
     fn search(self) -> (T, R);
 }
 
-// FIXME: Currently, this `impl` overlaps when the source tuple contains a generic parameter.
 impl<T> TupleDecompose<TupleOutputHole, Self, ()> for T {
     fn search(self) -> (TupleOutputHole, Self) {
         (TupleOutputHole { _private: () }, self)
