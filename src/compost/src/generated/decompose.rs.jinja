@@ -1,6 +1,6 @@
 {%- set MAX_ARITY = 12 -%}
 
-use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData};
+use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
 
 // === Tuple Expansion === //
 
@@ -14,7 +14,10 @@ pub struct TupleInputHole {
 
 impl TupleInputHole {
 	fn new_mut<'a>() -> &'a mut Self {
-		Box::leak(Box::new(TupleInputHole { _private: () }))
+		unsafe {
+			// Safety: ZSTs can dangle.
+			NonNull::<Self>::dangling().as_mut()
+		}
 	}
 }
 
@@ -148,6 +151,9 @@ where
 
 // === Tuple truncation === //
 
+// Finally, we define a mechanism for truncating the end off a tuple. This is used to get rid of the
+// trailing `TupleOutputHole` instances emitted at the end of the tuple once all required components
+// have been acquired.
 pub trait ArityTruncate<R> {
 	fn truncate_arity(self) -> R;
 }
@@ -172,14 +178,218 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 
 {% set MACROS_PREFIX = "$crate::macros" -%}
 
-// FIXME: Unfortunately, `normalize_arity` limits the lifetime of the decomposed tuple to the lifetime
-//  of the input tuple rather than the lifetimes of the tuple's elements.
-// FIXME: Additionally, inference breaks down if the expression's type cannot be immediately resolved
-//  (e.g. adding just one indirection between this expression and the assignment point at which the
-//   output type is known is enough to break inference entirely)
+/// This macro takes a **mutable reference** to a tuple and decomposes it into a sub-tuple
+/// (i.e. a tuple containing a subset of the values contained in the parent tuple).
+///
+/// ## Syntax
+///
+/// There are two ways in which this macro can be used...
+/// 
+/// ...in an **expression**:
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut input = (1i32, &mut 2u32, 'c');
+///
+/// fn example(cx: (&i32, &mut u32)) {
+/// 	dbg!(cx);
+/// }
+/// 
+/// // Can be used when calling a function...
+/// example(decompose!(input));
+///
+/// // ...or when assigning to a variable.
+/// let cx_subset: (&mut u32, &mut char) = decompose!(input);
+/// ```
+///
+/// ...in a **statement:**
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut input = (1i32, &mut 2u32, 'c', 1.3f32);
+///
+/// // Brings component references into scope and produces
+/// // a `rest` value containing the remaining components.
+/// //
+/// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
+/// // is new-typed in a macro-internal `TupleRemainder` struct.
+/// decompose!(input => rest & {
+///		my_char: &mut char,
+/// 	my_i32: &i32,
+/// });
+///
+/// dbg!((my_char, my_i32));
+///
+/// // `rest` can itself be decomposed several times.
+/// decompose!(rest => rest & { my_u32: &u32 });
+///
+/// // If you're done decomposing, you can omit the `rest` parameter.
+/// decompose!(rest => { my_f32: &mut f32 });
+/// 
+/// dbg!((my_u32, my_f32));  // (borrows from multiple decompose statements simultaneously)
+/// dbg!(my_i32);  // (remains valid!)
+/// ```
+///
+/// ...in a **combination of both**:
+///
+/// ```
+/// use compost::decompose;
+///
+/// struct MyThing {
+/// # /*
+/// 	...
+/// # */
+/// }
+///
+/// impl MyThing {
+///		pub fn do_something(&mut self, deps: (&u32, &mut i32, &char)) {
+/// 		dbg!(deps);
+/// 	}
+/// }
+///
+/// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char)) {
+///		decompose!(cx => cx_rest & { thing: &mut MyThing });
+/// 	thing.do_something(decompose!(cx_rest));
+///
+/// 	decompose!(cx => { my_char: &char });
+///		dbg!(my_char);
+/// }
+///
+/// ```
+///
+/// ## What Can Be Borrowed?
+///
+/// **Rule 1:** `decompose!` expects a mutable reference to the tuple it is decomposing. Thus, this is not valid:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn example(cx: (&i32, &u32)) {
+///		decompose!(cx => { my_i32: &i32 });
+///		dbg!(my_i32);
+/// }
+/// ```
+///
+/// but this is:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &u32)) {  // (see how the `cx` variable itself is now mut?)
+///		decompose!(cx => { my_i32: &i32 });
+///		dbg!(my_i32);
+/// }
+/// ```
+///
+/// **Rule 2:** `decompose!` always decomposes tuples into tuples, even if they're **single element tuples.**
+/// 
+/// Thus, this is not valid:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: &i32) {
+/// 	dbg!(cx);
+/// }
+/// 
+///	fn example(mut cx: (&i32, &u32)) {
+/// 	takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+/// ...but this is:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: (&i32,)) {  // (notice the trailing comma?)
+/// 	dbg!(cx);
+/// }
+/// 
+///	fn example(mut cx: (&i32, &u32)) {
+/// 	takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+/// Note the **trailing comma** in `(&i32,)`, which differentiates single element tuples from
+/// grouping parentheses around types.
+///
+/// **Rule 3:** Components in the input tuple can be anything. They can be references, mutable references, smart pointers,
+/// owned instances, etc. However, components in the output tuple must be **immutable or mutable** references.
+/// 
+/// A reference can be decomposed from an input tuple if the input tuple has some element that implements [`Borrow<T>`](Borrow)
+/// (or [`BorrowMut<T>`](BorrowMut) if the reference being requested is mutable) to that specific type `T`.
+///
+/// ```
+/// use core::borrow::Borrow;
+/// use compost::decompose;
+///
+/// fn example<T: Borrow<V>, V>(mut cx: (T,)) {
+///		decompose!(cx => { v: &V });
+///
+/// 	// Of course, you can still borrow the original value as well...
+/// 	decompose!(cx => { v: &mut T });
+/// }
+/// ```
+///
+/// Note that the **actual element itself** must implement `Borrow` so, while `T: Borrow<V>`—
+/// making it possible to decompose `&V` from an **owned** instance of `T`—`&'_ T` does not, making
+/// that decomposition invalid. You'd need to adjust your generic parameter bounds to make that work:
+/// 
+/// ```
+/// use core::borrow::Borrow;
+/// use compost::decompose;
+///
+/// fn example<'a, T, V>(mut cx: (&'a mut T,))
+/// where
+///		&'a mut T: Borrow<V>,
+///  {
+///		decompose!(cx => { v: &V });
+/// }
+/// ```
+///
+/// ## Caveats
+///
+/// First, because variadic tuples are not a thing yet, the maximum arity of (number of elements in)
+/// both the input and output tuples is **{{MAX_ARITY}}**. This value is configurable in the source code
+/// (see: `src/generated/decompose.rs.jinja`'s `MAX_ARITY` template variable).
+///
+/// Additionally, because of inference jank, the type of the tuple being decomposed into must be known
+/// immediately outside the macro. Thus, even though the type of `cx_subset` is trivially inferrable
+/// in this example, Rust's inference engine will choke because the type of the place to which the
+/// expression result is being assigned is not immediately known.
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// let mut input = (1i32, &mut 2u32, 'c');
+///
+/// fn example(cx: (&i32, &mut u32)) {
+/// 	dbg!(cx);
+/// }
+///
+/// let cx_subset = decompose!(input);  // (oh no!)
+/// example(cx_subset);
+/// ```
+///
+/// Finally, because `decompose!` consumes a mutable reference to the tuple being decomposed:
+///
+/// 1. The tuple must be marked as mutable (but you already knew that).
+/// 2. Tuple temporaries cannot be decomposed and returned from the function.
+///
+/// Thus, this fails to compile:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn give_me_some_things<'a>(mut cx: (&'a u32, &'a mut i32)) -> (&'a u32, &'a i32) {
+///		decompose!(cx)
+/// }
+/// ```
 #[macro_export]
 macro_rules! decompose {
-	{#- TODO: De-duplicate codegen -#}
 	($input:expr) => {
 		{
 			use {{MACROS_PREFIX}}::NormalizeArity;

@@ -1,45 +1,24 @@
-use std::{
-	borrow::{Borrow, BorrowMut},
-	cell::{RefCell, RefMut},
-	fmt,
-};
-
-struct MyRefMut<'a, T: ?Sized>(RefMut<'a, T>);
-
-impl<'a, T: ?Sized> Borrow<T> for MyRefMut<'a, T> {
-	fn borrow(&self) -> &T {
-		&self.0
-	}
-}
-
-impl<'a, T: ?Sized> BorrowMut<T> for MyRefMut<'a, T> {
-	fn borrow_mut(&mut self) -> &mut T {
-		&mut self.0
-	}
-}
+use compost::decompose;
 
 fn main() {
-	let cell = RefCell::new(3);
+	let mut cx = (&1u32, &mut 2i32, 'c', "d", Box::new(5u8), 6i8);
 
-	example((
-		MyRefMut(cell.borrow_mut()),
-		&mut 3,
-		'w',
-		"whee",
-		&mut 'k',
-		"waz",
-	))
-}
+	fn function_taking_subset(cx: (&u32, &i32, &mut u8)) {
+		dbg!(cx);
+	}
 
-fn example<T, V: fmt::Debug>(mut a: (MyRefMut<u32>, &mut i32, char, &str, &mut T, V)) {
-	example_2(compost::decompose!(a));
+	function_taking_subset(decompose!(cx));
 
-	compost::decompose!(a => b & { v0: &char });
-	compost::decompose!(b => { v1: &str, v2: &mut V });
+	decompose!(cx => cx_rest & {
+		value_1: &str,
+		value_2: &mut char,
+	});
 
-	dbg!((v0, v1, v2));
-}
+	dbg!((value_1, value_2));
 
-fn example_2(a: (&u32, &i32, &char)) {
-	dbg!(a);
+	decompose!(cx_rest => { value_3: &u32 });
+	dbg!(value_3);
+
+	function_taking_subset(decompose!(cx_rest));
+	function_taking_subset(decompose!(cx));
 }
