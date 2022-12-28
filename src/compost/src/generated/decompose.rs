@@ -542,7 +542,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// ## Syntax
 ///
-/// There are two ways in which this macro can be used...
+/// There are three ways in which this macro can be used...
 /// 
 /// ...in an **expression**:
 ///
@@ -591,7 +591,45 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// dbg!(my_i32);  // (remains valid!)
 /// ```
 ///
-/// ...in a **combination of both**:
+/// ...in an **expression** producing a "rest" tuple:
+///
+/// ```
+/// use compost::decompose;
+///
+/// #[derive(Debug)]
+/// struct MyThing1<'a>(&'a mut i32, &'a mut u32);
+///
+/// impl<'a> MyThing1<'a> {
+///		fn new((a, b): (&'a mut i32, &'a mut u32)) -> Self {
+///			Self(a, b)
+/// 	}
+/// }
+/// 
+/// #[derive(Debug)]
+/// struct MyThing2<'a>(&'a mut char);
+///
+/// impl<'a> MyThing2<'a> {
+///		fn new((c,): (&'a mut char,)) -> Self {
+///			Self(c)
+/// 	}
+/// }
+///
+/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str)) {
+/// 	let (ctor_args, mut cx) = decompose!(...cx);
+/// 	let thing_1 = MyThing1::new(ctor_args);
+/// 
+/// 	let (ctor_args, mut cx) = decompose!(...cx);
+/// 	let thing_2 = MyThing2::new(ctor_args);
+///
+///		dbg!(&thing_1);
+/// 	dbg!(&thing_2);
+///
+///		let the_str: (&str,) = decompose!(cx);
+///		dbg!(the_str);
+/// }
+/// ```
+///
+/// ...in a **combination of all three**:
 ///
 /// ```
 /// use compost::decompose;
@@ -603,19 +641,25 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 ///
 /// impl MyThing {
-///		pub fn do_something(&mut self, deps: (&u32, &mut i32, &char)) {
-/// 		dbg!(deps);
+///		pub fn do_something<'a>(&mut self, deps: (&'a u32, &'a mut i32, &'a char)) -> &'a char {
+/// 		dbg!(&deps);
+///			deps.2
 /// 	}
 /// }
 ///
-/// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char)) {
+/// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, char, u8)) {
 ///		decompose!(cx => cx_rest & { thing: &mut MyThing });
-/// 	thing.do_something(decompose!(cx_rest));
+///
+/// 	let (args, mut cx_rest) = decompose!(...cx_rest);
+/// 	let my_char = thing.do_something(args);
+///
+/// 	decompose!(cx_rest => { my_u8: &u8 });
+///		dbg!(my_u8);
+///		dbg!(my_char);
 ///
 /// 	decompose!(cx => { my_char: &char });
 ///		dbg!(my_char);
 /// }
-///
 /// ```
 ///
 /// ## What Can Be Borrowed?
@@ -709,6 +753,58 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 /// ```
 ///
+/// **Rule 4:** The element of the tuple providing the appropriate `Borrow` implementation must
+/// be unambiguous. This implies, in the general case, that you cannot borrow an element when
+/// that element is present multiple times in the input tuple:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &mut i32, &u32, Box<u32>)) {
+/// 	decompose!(cx => {
+///			my_i32: &i32,
+///			my_u32: &u32,
+/// 	});
+/// 	dbg!((my_i32, my_u32));
+/// }
+/// ```
+///
+/// Funnily enough, this works:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &mut i32, &u32, Box<u32>, &char, &char, &char)) {
+/// 	decompose!(cx => {
+///			// There's only one element in the input tuple that can give a **mutable
+/// 		// reference** to these respective elements.
+///			my_i32: &mut i32,
+///			my_u32: &mut u32,
+/// 		
+///			// Also, even though `&char` shows up *thrice* in the context tuple, it
+///			// is not used anywhere in the decomposition so it is fine.
+/// 	});
+/// 	dbg!((my_i32, my_u32));
+/// }
+/// ```
+///
+/// **Rule 5:** Finally, elements used in a tuple decomposition can only be used once,
+/// even if **they could theoretically be shared.**
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &u32)) {
+///		// This works well but...
+///		decompose!(cx => rest & { my_first_i32_ref: &i32 });
+///	
+/// 	// This fails!
+/// 	decompose!(rest => { my_second_i32_ref: &i32 });
+///
+///		dbg!((my_first_i32_ref, my_second_i32_ref));
+/// }
+/// ```
+///
 /// ## Caveats
 ///
 /// **Caveat 1:** Because variadic tuples are not a thing yet, the maximum arity of (number of elements in)
@@ -731,73 +827,19 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// ```
 #[macro_export]
 macro_rules! decompose {
-	($input:expr) => {
+	(...$input:expr) => {
 		{
 			use $crate::macros::NormalizeArity;
 			let input = $input.normalize_arity();
 			let builder = $crate::macros::TupleBuilder::new();
 			
 			match builder.inference_helper() {
-				$crate::macros::Some(var) => var,
-				$crate::macros::None => {
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p0, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p1, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p2, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p3, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p4, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p5, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p6, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p7, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p8, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p9, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p10, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-					let (v, input) = $crate::macros::TupleSearch::search(input);
-					let (p11, builder) = $crate::macros::TupleBuilderId::id(builder, v);
-					
-
-					let _builder = builder;
-					let _input = input;
-
-					$crate::macros::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11))
-				}
-			}
-		}
-	};
-	($input:expr => $rest:ident & {
-		$($name:ident: $ty:ty),*
-		$(,)?
-	}) => {
-		#[allow(unnecessary_mut)]
-		let (($($name,)*), mut $rest): (($($ty,)*), _) = {
-			use $crate::macros::NormalizeArity;
-			let input = $input.normalize_arity();
-			let builder = $crate::macros::TupleBuilder::new();
-			
-			match builder.inference_helper() {
-				#[allow(unreachable_code)]
-				$crate::macros::Some(var) => (var, loop {}),
+				$crate::macros::Some(var) => {
+					fn any<T>() -> T {
+						loop {}
+					}
+					(var, any())
+				},
 				$crate::macros::None => {
 					let (v, input) = $crate::macros::TupleSearch::search(input);
 					let (p0, builder) = $crate::macros::TupleBuilderId::id(builder, v);
@@ -841,7 +883,17 @@ macro_rules! decompose {
 					($crate::macros::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)), $crate::macros::TupleRemainder(input))
 				}
 			}
-		};
+		}
+	};
+	($input:expr) => {
+		$crate::decompose!(...$input).0
+	};
+	($input:expr => $rest:ident & {
+		$($name:ident: $ty:ty),*
+		$(,)?
+	}) => {
+		#[allow(unnecessary_mut)]
+		let (($($name,)*), mut $rest): (($($ty,)*), _) = $crate::decompose!(...$input);
 	};
 	($input:expr => {
 		$($name:ident: $ty:ty),*
