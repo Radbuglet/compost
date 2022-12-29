@@ -1,7 +1,7 @@
 [package]
 name = "compost"
 version = "0.1.1"
-description = "decomposes tuples into tuples containing a subset of their values"
+description = "Decomposes tuples into tuples containing a subset of their values."
 readme = "../../README.md"
 categories = ["rust-patterns", "no-std"]
 license = "MIT"

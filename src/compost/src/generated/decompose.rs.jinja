@@ -546,4 +546,4 @@ macro_rules! decompose {
     }) => {
         $crate::decompose!($input => _ignored & { $($name:$ty),* });
     }
-}
+}{{"\n"}}

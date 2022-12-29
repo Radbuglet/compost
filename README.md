@@ -38,5 +38,7 @@ Yes, this library...
 - Produces (admittedly pretty ugly) errors at compile time if the tuple cannot be decomposed.
 - Supports borrowing mutable, immutable, owned, and smart-pointer wrapped (so long as they implement
   `Borrow`) components.
+- Supports borrowing generic elements without failing spuriously on monomorphization.
+- Relies on type inference rather than `TypeId`, allowing the macro to operate on non-`'static` types.
 - Supports `no_std` environments.
 - Has zero runtime dependencies.
