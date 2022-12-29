@@ -178,7 +178,7 @@ pub trait TupleBuilderId<V, R>: Sized {
 
 impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
 
-impl<P0,> TupleBuilderId<P0, ()> for TupleBuilder<(P0,)> {}
+impl<P0> TupleBuilderId<P0, ()> for TupleBuilder<(P0,)> {}
 impl<P0, P1> TupleBuilderId<P0, (P1,)> for TupleBuilder<(P0, P1)> {}
 impl<P0, P1, P2> TupleBuilderId<P0, (P1, P2)> for TupleBuilder<(P0, P1, P2)> {}
 impl<P0, P1, P2, P3> TupleBuilderId<P0, (P1, P2, P3)> for TupleBuilder<(P0, P1, P2, P3)> {}
@@ -190,6 +190,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8> TupleBuilderId<P0, (P1, P2, P3, P4, P5,
 impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9)> {}
 impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)> {}
 impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> TupleBuilderId<P0, (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)> for TupleBuilder<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)> {}
+
 // === Tuple searching === //
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
@@ -538,7 +539,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// ## Syntax
 ///
 /// There are three ways in which this macro can be used...
-/// 
+///
 /// ...in an **expression**:
 ///
 /// ```
@@ -549,12 +550,15 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// fn example(cx: (&i32, &mut u32)) {
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// // Can be used when calling a function...
 /// example(decompose!(input));
 ///
 /// // ...or when assigning to a variable.
 /// let cx_subset: (&mut u32, &mut char) = decompose!(input);
+///
+/// // Which is equivalent to:
+/// let cx_subset = decompose!(input => (&mut u32, &mut char));
 /// ```
 ///
 /// ...in a **statement:**
@@ -569,7 +573,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// //
 /// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
 /// // is new-typed in a macro-internal `TupleRemainder` struct
-/// // to allow for backwards-compatability-preserving changes to
+/// // to allow for backwards-compatibility-preserving changes to
 /// // the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
 ///     my_char: &mut char,
@@ -583,7 +587,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// // If you're done decomposing, you can omit the `rest` parameter.
 /// decompose!(rest => { my_f32: &mut f32 });
-/// 
+///
 /// dbg!((my_u32, my_f32));  // (borrows from multiple decompose statements simultaneously)
 /// dbg!(my_i32);  // (remains valid!)
 /// ```
@@ -601,7 +605,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///         Self(a, b)
 ///     }
 /// }
-/// 
+///
 /// #[derive(Debug)]
 /// struct MyThing2<'a>(&'a mut char);
 ///
@@ -611,18 +615,25 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///     }
 /// }
 ///
-/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str)) {
+/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str, &mut u8)) {
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_1 = MyThing1::new(ctor_args);
-/// 
+///
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_2 = MyThing2::new(ctor_args);
 ///
 ///     dbg!(&thing_1);
 ///     dbg!(&thing_2);
 ///
-///     let the_str: (&str,) = decompose!(cx);
+///     let the_str = decompose!(cx => (&str));
 ///     dbg!(the_str);
+///
+///     // This syntax can also be combined with the type-annotated tuple syntax.
+///     let (the_str, mut rest): ((&str,), _) = decompose!(...cx => (&str));
+///     dbg!(the_str);
+///
+///     let the_u8 = decompose!(rest => (&u8));
+///     dbg!(the_u8);
 /// }
 /// ```
 ///
@@ -658,7 +669,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 ///     // Call another unrelated method without rest decomposition.
 ///     thing.do_something_else(decompose!(cx_rest));
-/// 
+///
 ///     // `my_char` remains valid!
 ///     dbg!(my_char);
 /// }
@@ -689,7 +700,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// ```
 ///
 /// **Rule 2:** `decompose!` always decomposes tuples into tuples, even if they're **single element tuples.**
-/// 
+///
 /// Thus, this is not valid:
 ///
 /// ```compile_fail
@@ -698,7 +709,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// fn takes_cx(cx: &i32) {
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// fn example(mut cx: (&i32, &u32)) {
 ///     takes_cx(decompose!(cx));
 /// }
@@ -712,7 +723,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// fn takes_cx(cx: (&i32,)) {  // (notice the trailing comma?)
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// fn example(mut cx: (&i32, &u32)) {
 ///     takes_cx(decompose!(cx));
 /// }
@@ -723,7 +734,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// **Rule 3:** Components in the input tuple can be anything. They can be references, mutable references, smart pointers,
 /// owned instances, etc. However, components in the output tuple must be **immutable or mutable** references.
-/// 
+///
 /// A reference can be decomposed from an input tuple if the input tuple has some element that implements [`Borrow<T>`](Borrow)
 /// (or [`BorrowMut<T>`](BorrowMut) if the reference being requested is mutable) to that specific type `T`.
 ///
@@ -742,7 +753,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// Note that the **actual element itself** must implement `Borrow` so, while `T: Borrow<V>`—
 /// making it possible to decompose `&V` from an **owned** instance of `T`—`&'_ T` does not, making
 /// that decomposition invalid. You'd need to adjust your generic parameter bounds to make that work:
-/// 
+///
 /// ```
 /// use core::borrow::Borrow;
 /// use compost::decompose;
@@ -782,7 +793,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///         // reference** to these respective elements.
 ///         my_i32: &mut i32,
 ///         my_u32: &mut u32,
-///         
+///
 ///         // Also, even though `&char` shows up *thrice* in the context tuple, it
 ///         // is not used anywhere in the decomposition so it is fine.
 ///     });
@@ -799,7 +810,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// fn example(mut cx: (&i32, &u32)) {
 ///     // This works well but...
 ///     decompose!(cx => rest & { my_first_i32_ref: &i32 });
-/// 
+///
 ///     // This fails!
 ///     decompose!(rest => { my_second_i32_ref: &i32 });
 ///
@@ -829,12 +840,13 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// ```
 #[macro_export]
 macro_rules! decompose {
+    // "Rest" decomposing expression
     (...$input:expr) => {
         {
             use $crate::macro_internal::NormalizeArity;
             let input = $input.normalize_arity();
             let builder = $crate::macro_internal::TupleBuilder::new();
-            
+
             match builder.inference_helper() {
                 $crate::macro_internal::Some(var) => {
                     fn any<T>() -> T {
@@ -845,51 +857,74 @@ macro_rules! decompose {
                 $crate::macro_internal::None => {
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p0, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p1, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p2, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p3, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p4, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p5, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p6, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p7, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p8, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p9, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p10, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
+
                     let (v, input) = $crate::macro_internal::TupleSearch::search(input);
                     let (p11, builder) = $crate::macro_internal::TupleBuilderId::id(builder, v);
-                    
 
                     let _builder = builder;
 
-                    ($crate::macro_internal::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)), $crate::macro_internal::TupleRemainder(input))
+                    (
+                        $crate::macro_internal::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)),
+                        $crate::macro_internal::TupleRemainder(input)
+                    )
                 }
             }
         }
     };
+
+    // Annotated "rest" decomposing expression
+    (...$input:expr => (
+        $($ty:ty),*$(,)?
+    )) => {
+        $crate::macro_internal::identity::<(
+            ($($ty,)*),
+            _,
+        )>($crate::decompose!(...$input))
+    };
+
+    // Regular decomposing expression
     ($input:expr) => {
         $crate::decompose!(...$input).0
     };
+
+    // Annotated regular decomposing expression
+    ($input:expr => (
+        $($ty:ty),*$(,)?
+    )) => {
+        $crate::macro_internal::identity::<($($ty,)*)>($crate::decompose!($input))
+    };
+
+    // "Rest" decomposing statement
     ($input:expr => $rest:ident & {
         $($name:ident: $ty:ty),*
         $(,)?
@@ -897,6 +932,8 @@ macro_rules! decompose {
         #[allow(unnecessary_mut)]
         let (($($name,)*), mut $rest): (($($ty,)*), _) = $crate::decompose!(...$input);
     };
+
+    // Regular decomposing statement
     ($input:expr => {
         $($name:ident: $ty:ty),*
         $(,)?

@@ -95,17 +95,14 @@ impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
 
 {% for i in range(1, MAX_ARITY + 1) -%}
 
-{%- set para_list_1plus %}{% for j in range(1, i) -%}
-    P{{j}}{{ '' if loop.last else ', ' }}
-{%- endfor %}{% endset -%}
-
-{%- set para_list -%}
-    P0,{{ ' ' if i > 1 else '' }}{{ para_list_1plus }}
-{%- endset -%}
-
-impl<{{para_list}}> TupleBuilderId<P0, ({{para_list_1plus}}{{ ',' if i == 2 else '' }})> for TupleBuilder<({{para_list}})> {}
-{% endfor -%}
-
+impl<
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{% endfor -%}
+> TupleBuilderId<P0, (
+    {%- for j in range(1, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+)> for TupleBuilder<(
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+)> {}
+{% endfor %}
 // === Tuple searching === //
 
 // Now, we define a way to search a tuple of arity `MAX_ARITY`.
@@ -176,7 +173,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// ## Syntax
 ///
 /// There are three ways in which this macro can be used...
-/// 
+///
 /// ...in an **expression**:
 ///
 /// ```
@@ -187,12 +184,15 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// fn example(cx: (&i32, &mut u32)) {
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// // Can be used when calling a function...
 /// example(decompose!(input));
 ///
 /// // ...or when assigning to a variable.
 /// let cx_subset: (&mut u32, &mut char) = decompose!(input);
+///
+/// // Which is equivalent to:
+/// let cx_subset = decompose!(input => (&mut u32, &mut char));
 /// ```
 ///
 /// ...in a **statement:**
@@ -207,7 +207,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// //
 /// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
 /// // is new-typed in a macro-internal `TupleRemainder` struct
-/// // to allow for backwards-compatability-preserving changes to
+/// // to allow for backwards-compatibility-preserving changes to
 /// // the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
 ///     my_char: &mut char,
@@ -221,7 +221,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///
 /// // If you're done decomposing, you can omit the `rest` parameter.
 /// decompose!(rest => { my_f32: &mut f32 });
-/// 
+///
 /// dbg!((my_u32, my_f32));  // (borrows from multiple decompose statements simultaneously)
 /// dbg!(my_i32);  // (remains valid!)
 /// ```
@@ -239,7 +239,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///         Self(a, b)
 ///     }
 /// }
-/// 
+///
 /// #[derive(Debug)]
 /// struct MyThing2<'a>(&'a mut char);
 ///
@@ -249,18 +249,25 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///     }
 /// }
 ///
-/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str)) {
+/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str, &mut u8)) {
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_1 = MyThing1::new(ctor_args);
-/// 
+///
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_2 = MyThing2::new(ctor_args);
 ///
 ///     dbg!(&thing_1);
 ///     dbg!(&thing_2);
 ///
-///     let the_str: (&str,) = decompose!(cx);
+///     let the_str = decompose!(cx => (&str));
 ///     dbg!(the_str);
+///
+///     // This syntax can also be combined with the type-annotated tuple syntax.
+///     let (the_str, mut rest): ((&str,), _) = decompose!(...cx => (&str));
+///     dbg!(the_str);
+///
+///     let the_u8 = decompose!(rest => (&u8));
+///     dbg!(the_u8);
 /// }
 /// ```
 ///
@@ -296,7 +303,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///
 ///     // Call another unrelated method without rest decomposition.
 ///     thing.do_something_else(decompose!(cx_rest));
-/// 
+///
 ///     // `my_char` remains valid!
 ///     dbg!(my_char);
 /// }
@@ -327,7 +334,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// ```
 ///
 /// **Rule 2:** `decompose!` always decomposes tuples into tuples, even if they're **single element tuples.**
-/// 
+///
 /// Thus, this is not valid:
 ///
 /// ```compile_fail
@@ -336,7 +343,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// fn takes_cx(cx: &i32) {
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// fn example(mut cx: (&i32, &u32)) {
 ///     takes_cx(decompose!(cx));
 /// }
@@ -350,7 +357,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// fn takes_cx(cx: (&i32,)) {  // (notice the trailing comma?)
 ///     dbg!(cx);
 /// }
-/// 
+///
 /// fn example(mut cx: (&i32, &u32)) {
 ///     takes_cx(decompose!(cx));
 /// }
@@ -361,7 +368,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///
 /// **Rule 3:** Components in the input tuple can be anything. They can be references, mutable references, smart pointers,
 /// owned instances, etc. However, components in the output tuple must be **immutable or mutable** references.
-/// 
+///
 /// A reference can be decomposed from an input tuple if the input tuple has some element that implements [`Borrow<T>`](Borrow)
 /// (or [`BorrowMut<T>`](BorrowMut) if the reference being requested is mutable) to that specific type `T`.
 ///
@@ -380,7 +387,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// Note that the **actual element itself** must implement `Borrow` so, while `T: Borrow<V>`—
 /// making it possible to decompose `&V` from an **owned** instance of `T`—`&'_ T` does not, making
 /// that decomposition invalid. You'd need to adjust your generic parameter bounds to make that work:
-/// 
+///
 /// ```
 /// use core::borrow::Borrow;
 /// use compost::decompose;
@@ -420,7 +427,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 ///         // reference** to these respective elements.
 ///         my_i32: &mut i32,
 ///         my_u32: &mut u32,
-///         
+///
 ///         // Also, even though `&char` shows up *thrice* in the context tuple, it
 ///         // is not used anywhere in the decomposition so it is fine.
 ///     });
@@ -437,7 +444,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// fn example(mut cx: (&i32, &u32)) {
 ///     // This works well but...
 ///     decompose!(cx => rest & { my_first_i32_ref: &i32 });
-/// 
+///
 ///     // This fails!
 ///     decompose!(rest => { my_second_i32_ref: &i32 });
 ///
@@ -467,12 +474,13 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// ```
 #[macro_export]
 macro_rules! decompose {
+    // "Rest" decomposing expression
     (...$input:expr) => {
         {
             use {{MACROS_PREFIX}}::NormalizeArity;
             let input = $input.normalize_arity();
             let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
-            
+
             match builder.inference_helper() {
                 {{MACROS_PREFIX}}::Some(var) => {
                     fn any<T>() -> T {
@@ -483,23 +491,46 @@ macro_rules! decompose {
                 {{MACROS_PREFIX}}::None => {
                     {%- for j in range(0, MAX_ARITY) %}
                     let (v, input) = {{MACROS_PREFIX}}::TupleSearch::search(input);
-                    let (p{{j}}, builder) = {{MACROS_PREFIX}}::TupleBuilderId::id(builder, v);
-                    {% endfor %}
-
+                    let (p{{j}}, builder) = {{MACROS_PREFIX}}::TupleBuilderId::id(builder, v);{{"\n"}}
+                    {%- endfor %}
                     let _builder = builder;
 
-                    ({{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
-                        {%- for j in range(0, MAX_ARITY) -%}
-                        p{{j}}{{ "" if loop.last else ", " }}
-                        {%- endfor -%}
-                    )), {{MACROS_PREFIX}}::TupleRemainder(input))
+                    (
+                        {{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
+                            {%- for j in range(0, MAX_ARITY) -%}
+                            p{{j}}{{ "" if loop.last else ", " }}
+                            {%- endfor -%}
+                        )),
+                        {{MACROS_PREFIX}}::TupleRemainder(input)
+                    )
                 }
             }
         }
     };
+
+    // Annotated "rest" decomposing expression
+    (...$input:expr => (
+        $($ty:ty),*$(,)?
+    )) => {
+        {{MACROS_PREFIX}}::identity::<(
+            ($($ty,)*),
+            _,
+        )>($crate::decompose!(...$input))
+    };
+
+    // Regular decomposing expression
     ($input:expr) => {
         $crate::decompose!(...$input).0
     };
+
+    // Annotated regular decomposing expression
+    ($input:expr => (
+        $($ty:ty),*$(,)?
+    )) => {
+        {{MACROS_PREFIX}}::identity::<($($ty,)*)>($crate::decompose!($input))
+    };
+
+    // "Rest" decomposing statement
     ($input:expr => $rest:ident & {
         $($name:ident: $ty:ty),*
         $(,)?
@@ -507,6 +538,8 @@ macro_rules! decompose {
         #[allow(unnecessary_mut)]
         let (($($name,)*), mut $rest): (($($ty,)*), _) = $crate::decompose!(...$input);
     };
+
+    // Regular decomposing statement
     ($input:expr => {
         $($name:ident: $ty:ty),*
         $(,)?
