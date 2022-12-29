@@ -1,6 +1,6 @@
 [package]
 name = "compost"
-version = "0.2.0"
+version = "0.3.0"
 description = "Adds a macro to decompose tuples into tuples containing a subset of their values"
 readme = "../../README.md"
 categories = ["rust-patterns", "no-std"]
