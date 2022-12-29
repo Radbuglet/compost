@@ -1,9 +1,10 @@
 [package]
 name = "compost"
-version = "0.1.1"
-description = "Decomposes tuples into tuples containing a subset of their values."
+version = "0.2.0"
+description = "Adds a macro to decompose tuples into tuples containing a subset of their values"
 readme = "../../README.md"
 categories = ["rust-patterns", "no-std"]
+keywords = ["tuple", "context", "provider", "inject", "macro"]
 license = "MIT"
 repository = "https://github.com/Radbuglet/compost"
 edition = "2021"
