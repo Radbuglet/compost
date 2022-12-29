@@ -540,7 +540,11 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// There are three ways in which this macro can be used...
 ///
-/// ...in an **expression**:
+/// ##### ...in an **expression**:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful when calling a function with a desired subset of the available context.
 ///
 /// ```
 /// use compost::decompose;
@@ -563,7 +567,11 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// assert_eq!(cx_subset, (&mut 2, &mut 'c'));
 /// ```
 ///
-/// ...in a **statement:**
+/// ##### ...in a **statement:**
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful for pulling context contained in a tuple into scope.
 ///
 /// ```
 /// use compost::decompose;
@@ -594,7 +602,13 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// assert_eq!(my_i32, &1);  // (remains valid!)
 /// ```
 ///
-/// ...in an **expression** producing a "rest" tuple:
+/// ##### ...in an **expression** producing a "rest" tuple:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful for passing context to a method while allowing you to decompose the
+/// remainder while the borrow is still ongoing.
+///
 ///
 /// ```
 /// use compost::decompose;
@@ -638,7 +652,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// do_something((&mut 1, &mut 2, &mut 'c', "d", &mut 5));
 /// ```
 ///
-/// ...in a **combination of all three**:
+/// ##### ...in a **combination of all three**:
+///
+/// [Jump to the "summary" section](#summary)
 ///
 /// ```
 /// use compost::decompose;
@@ -678,32 +694,39 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// ### Summary
 ///
-/// In summary, here are the **expression forms** available for this macro:
+/// In summary, here are the [expression forms](#in-an-expression) available for this macro:
 ///
 /// - `decompose!($expr) -> (T1, T2, T3)`:<br>
 ///   Decomposes a tuple into a subset tuple.
 ///
-/// - `decompose!(...$expr) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
-///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow.
-///
 /// - `decompose!($expr => ($T1, $T2, $T3)) -> (T1, T2, T3)`:<br>
 ///   Decomposes a tuple into a subset tuple with explicit type annotations.
 ///
-/// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
+/// Here are the [expression with rest forms](#in-an-expression-producing-a-rest-tuple) available for
+/// this macro:
+///
+/// - `decompose!(...$expr) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
 ///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow.
 ///
-/// And here are its **statement forms**:
+/// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
+///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow
+///   with explicit type annotations.
+///
+/// And here are its [statement forms](#in-a-statement):
 ///
 /// - `decompose!($expr => { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
 ///   Decomposes a tuple into `n` different components and brings them in scope under the specified
 ///   names.
+///
 /// - `decompose!($expr => $rest_name & { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
 ///   Decomposes a tuple into `n` different components and brings them in scope under the specified
 ///   names. Brings the remainder of the input tuple into scope under the specified `$rest_name`.
 ///
 /// ## What Can Be Borrowed?
 ///
-/// **Rule 1:** `decompose!` expects a mutable reference to the tuple it is decomposing. Thus, this is not valid:
+/// ##### Rule 1
+///
+/// `decompose!` expects a mutable reference to the tuple it is decomposing. Thus, this is not valid:
 ///
 /// ```compile_fail
 /// use compost::decompose;
@@ -725,7 +748,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 /// ```
 ///
-/// **Rule 2:** `decompose!` always decomposes tuples into tuples, even if they're **single element tuples.**
+///  ##### Rule 2
+///
+/// `decompose!` always decomposes tuples into tuples, even if they're **single element tuples.**
 ///
 /// Thus, this is not valid:
 ///
@@ -758,7 +783,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// Note the **trailing comma** in `(&i32,)`, which differentiates single element tuples from
 /// grouping parentheses around types.
 ///
-/// **Rule 3:** Components in the input tuple can be anything. They can be references, mutable references, smart pointers,
+///  ##### Rule 3
+///
+/// Components in the input tuple can be anything. They can be references, mutable references, smart pointers,
 /// owned instances, etc. However, components in the output tuple must be **immutable or mutable** references.
 ///
 /// A reference can be decomposed from an input tuple if the input tuple has some element that implements [`Borrow<T>`](Borrow)
@@ -792,7 +819,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 /// ```
 ///
-/// **Rule 4:** The element of the tuple providing the appropriate `Borrow` implementation must
+///  ##### Rule 4
+///
+/// The element of the tuple providing the appropriate `Borrow` implementation must
 /// be unambiguous. This implies, in the general case, that you cannot borrow an element when
 /// that element is present multiple times in the input tuple:
 ///
@@ -827,7 +856,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 /// ```
 ///
-/// **Rule 5:** Finally, elements used in a tuple decomposition can only be used once,
+///  ##### Rule 5
+///
+/// Finally, elements used in a tuple decomposition can only be used once,
 /// even if **they could theoretically be shared.**
 ///
 /// ```compile_fail
