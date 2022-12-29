@@ -1,8 +1,10 @@
-use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
+use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 // === Tuple Expansion === //
 
-pub struct TupleRemainder<T>(pub T);
+pub struct TupleRemainder<T> {
+    pub macro_internal_dont_touch: T,
+}
 
 pub struct TupleInputHole {
     _private: (),
@@ -132,7 +134,7 @@ impl<'a: 'b, 'b,P0: 'a, P1: 'a, P2: 'a, P3: 'a, P4: 'a, P5: 'a, P6: 'a, P7: 'a, 
     type Target = (&'b mut P0, &'b mut P1, &'b mut P2, &'b mut P3, &'b mut P4, &'b mut P5, &'b mut P6, &'b mut P7, &'b mut P8, &'b mut P9, &'b mut P10, &'b mut P11);
 
     fn normalize_arity(&'b mut self) -> Self::Target {
-        let me = &mut self.0;
+        let me = &mut self.macro_internal_dont_touch;
 
         (&mut me.0, &mut me.1, &mut me.2, &mut me.3, &mut me.4, &mut me.5, &mut me.6, &mut me.7, &mut me.8, &mut me.9, &mut me.10, &mut me.11)
     }
@@ -531,6 +533,144 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
     }
 }
 
+// === Filter magic === //
+
+pub struct FilterHoles<T>(FilterHolesPositive<T>);
+
+pub struct FilterHolesPositive<T>(PhantomData<T>);
+
+pub trait FilterHolesExtend<T, E> {
+    type Output;
+
+    fn extend(&self, tup: T, elem: E) -> Self::Output;
+}
+
+impl<T> FilterHoles<T> {
+    pub fn new(_infer_dummy: &T) -> Self {
+        Self(FilterHolesPositive(PhantomData))
+    }
+}
+
+impl<T> Deref for FilterHoles<T> {
+    type Target = FilterHolesPositive<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T> FilterHolesExtend<T, &'a mut TupleInputHole> for FilterHoles<&'a mut TupleInputHole> {
+    type Output = T;
+
+    fn extend(&self, tup: T, _elem: &'a mut TupleInputHole) -> T {
+        tup
+    }
+}
+
+impl<'a, P0> FilterHolesExtend<(), P0> for FilterHolesPositive<P0> {
+    type Output = (P0,);
+
+    fn extend(&self, _tup: (), elem: P0) -> Self::Output {
+        (elem,)
+    }
+}
+
+impl<'a, P0, P1> FilterHolesExtend<(P0,), P1> for FilterHolesPositive<P1> {
+    type Output = (P0, P1);
+
+    fn extend(&self, tup: (P0,), elem: P1) -> Self::Output {
+        (tup.0, elem)
+    }
+}
+
+impl<'a, P0, P1, P2> FilterHolesExtend<(P0, P1), P2> for FilterHolesPositive<P2> {
+    type Output = (P0, P1, P2);
+
+    fn extend(&self, tup: (P0, P1), elem: P2) -> Self::Output {
+        (tup.0, tup.1, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3> FilterHolesExtend<(P0, P1, P2), P3> for FilterHolesPositive<P3> {
+    type Output = (P0, P1, P2, P3);
+
+    fn extend(&self, tup: (P0, P1, P2), elem: P3) -> Self::Output {
+        (tup.0, tup.1, tup.2, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4> FilterHolesExtend<(P0, P1, P2, P3), P4> for FilterHolesPositive<P4> {
+    type Output = (P0, P1, P2, P3, P4);
+
+    fn extend(&self, tup: (P0, P1, P2, P3), elem: P4) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5> FilterHolesExtend<(P0, P1, P2, P3, P4), P5> for FilterHolesPositive<P5> {
+    type Output = (P0, P1, P2, P3, P4, P5);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4), elem: P5) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6> FilterHolesExtend<(P0, P1, P2, P3, P4, P5), P6> for FilterHolesPositive<P6> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5), elem: P6) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6), P7> for FilterHolesPositive<P7> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6), elem: P7) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7, P8> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6, P7), P8> for FilterHolesPositive<P8> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7, P8);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6, P7), elem: P8) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, tup.7, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6, P7, P8), P9> for FilterHolesPositive<P9> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6, P7, P8), elem: P9) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, tup.7, tup.8, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9), P10> for FilterHolesPositive<P10> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9), elem: P10) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, tup.7, tup.8, tup.9, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), P11> for FilterHolesPositive<P11> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), elem: P11) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, tup.7, tup.8, tup.9, tup.10, elem)
+    }
+}
+
+impl<'a, P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12> FilterHolesExtend<(P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11), P12> for FilterHolesPositive<P12> {
+    type Output = (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12);
+
+    fn extend(&self, tup: (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11), elem: P12) -> Self::Output {
+        (tup.0, tup.1, tup.2, tup.3, tup.4, tup.5, tup.6, tup.7, tup.8, tup.9, tup.10, tup.11, elem)
+    }
+}
+
 // === Macro definition === //
 
 /// This macro takes a **mutable reference** to a tuple and decomposes it into a sub-tuple
@@ -609,7 +749,6 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// These forms are useful for passing context to a method while allowing you to decompose the
 /// remainder while the borrow is still ongoing.
 ///
-///
 /// ```
 /// use compost::decompose;
 ///
@@ -632,6 +771,9 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// }
 ///
 /// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str, &mut u8)) {
+///     // NOTE: Because `rest`'s tuple layout is unspecified, `rest` is new-typed in a
+///     // macro-internal `TupleRemainder` struct to allow for backwards-compatibility-
+///     // preserving changes to the maximum arity, the search mechanism, etc.
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_1 = MyThing1::new(ctor_args);
 ///
@@ -652,7 +794,74 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// do_something((&mut 1, &mut 2, &mut 'c', "d", &mut 5));
 /// ```
 ///
-/// ##### ...in a **combination of all three**:
+/// ##### ...in an expression decomposing `TupleRemainder`:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// This one's a bit wacky. Recall how rest tuples aren't actually tuples but rather macro-internal
+/// `TupleRemainder` newtypes that should not, under any circumstance, be tampered with manually? Well,
+/// this form of the macro provides a way to safely tamper with these newtypes.
+///
+/// ```
+/// use compost::decompose;
+///
+/// # fn main() {
+/// let mut cx = (1i32, &2u32, &mut 3u8, 'd', "e");
+///
+/// decompose!(cx => rest & { my_char: &char });
+///
+/// // The type of `rest` is a `TupleRemainder<(...)>` where the type parameter of this
+/// // newtype is an implementation detail. Let's change that!
+/// let rest = decompose!(rest => (&mut ...));
+///
+/// // As the syntax suggests, the type of rest is now...
+/// let rest: (&'_ mut i32, &mut &u32, &mut &mut u8, &mut &str) = rest;
+/// //          ^ these lifetimes are the lifetime  ^ also notice how "&mut char"
+/// //            of the mutable reference to the     is missing but the order is
+/// //            input `rest` variable.              otherwise preserved?
+///
+/// let mut cmp_u8 = &mut 3u8;  // (done because `&mut T` forces `T` to be invariant
+///                             //  w.r.t its lifetime, causing weird type coercions
+///                             // and lifetime errors)
+/// assert_eq!(my_char, &'d');
+/// assert_eq!(rest, (&mut 1i32, &mut &2u32, &mut cmp_u8, &mut "e"));
+///
+/// // Of course, as a gesture of kindness towards other macro authors, this macro
+/// // works for regular tuples as well:
+/// let cx = decompose!(cx => (&mut ...));
+/// let cx: (&'_ mut i32, &mut &u32, &mut &mut u8, &mut char, &mut &str) = cx;
+/// //                                             ^ our "&mut char" is back!
+/// # }
+/// ```
+///
+/// The tuple returned from this form cannot be used in a fashion identical to its soure tuple.
+/// Recall: every element in the tuple now has an additional `&mut` indirection to it.
+///
+/// So, this doesn't work:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// let mut cx = (&1i32, &2u32);
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // works!
+///
+/// let mut cx = decompose!(cx => (&mut ...));
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // doesn't work!
+/// ```
+///
+/// But this does:
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut cx = (&1i32, &2u32);
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // works!
+///
+/// let mut cx = decompose!(cx => (&mut ...));
+/// decompose!(cx => { my_i32: &mut &i32, my_u32: &&u32 });  // also works but is different!
+/// ```
+///
+/// ##### ...in a **combination of (most of) them**:
 ///
 /// [Jump to the "summary" section](#summary)
 ///
@@ -711,6 +920,14 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
 ///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow
 ///   with explicit type annotations.
+///
+/// Here is the one form to help you [decompose a `TupleRemainder`](#in-an-expression-decomposing-tupleremainder)
+/// into its actual components:<br>
+///
+/// - `decompose!($expr => (&mut ...)) -> (&mut T1, &mut &T2, &mut &mut T3)`:<br>
+///   Given a mutable reference to a tuple (newtyped through `TupleRemainder` or otherwise), it
+///   decomposes the input tuple into a new tuple with a mutable reference to every component in
+///   that tuple.
 ///
 /// And here are its [statement forms](#in-a-statement):
 ///
@@ -952,7 +1169,7 @@ macro_rules! decompose {
 
                     (
                         $crate::macro_internal::ArityTruncate::truncate_arity((p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)),
-                        $crate::macro_internal::TupleRemainder(input)
+                        $crate::macro_internal::TupleRemainder { macro_internal_dont_touch: input },
                     )
                 }
             }
@@ -972,6 +1189,18 @@ macro_rules! decompose {
     // Regular decomposing expression
     ($input:expr) => {
         $crate::decompose!(...$input).0
+    };
+
+    // Full decomposing expression
+    ($input:expr => (&mut ...)) => {
+        {
+            use $crate::macro_internal::{FilterHolesExtend, NormalizeArity};
+            let input = $input.normalize_arity();
+            let builder = ();
+            let builder = $crate::macro_internal::FilterHoles::new(&input.0).extend(builder, input.0);let builder = $crate::macro_internal::FilterHoles::new(&input.1).extend(builder, input.1);let builder = $crate::macro_internal::FilterHoles::new(&input.2).extend(builder, input.2);let builder = $crate::macro_internal::FilterHoles::new(&input.3).extend(builder, input.3);let builder = $crate::macro_internal::FilterHoles::new(&input.4).extend(builder, input.4);let builder = $crate::macro_internal::FilterHoles::new(&input.5).extend(builder, input.5);let builder = $crate::macro_internal::FilterHoles::new(&input.6).extend(builder, input.6);let builder = $crate::macro_internal::FilterHoles::new(&input.7).extend(builder, input.7);let builder = $crate::macro_internal::FilterHoles::new(&input.8).extend(builder, input.8);let builder = $crate::macro_internal::FilterHoles::new(&input.9).extend(builder, input.9);let builder = $crate::macro_internal::FilterHoles::new(&input.10).extend(builder, input.10);let builder = $crate::macro_internal::FilterHoles::new(&input.11).extend(builder, input.11);
+
+            builder
+        }
     };
 
     // Annotated regular decomposing expression
@@ -996,5 +1225,5 @@ macro_rules! decompose {
         $(,)?
     }) => {
         $crate::decompose!($input => _ignored & { $($name:$ty),* });
-    }
+    };
 }

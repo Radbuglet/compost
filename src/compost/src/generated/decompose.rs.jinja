@@ -1,10 +1,12 @@
 {%- set MAX_ARITY = 12 -%}
 
-use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ptr::NonNull};
+use core::{borrow::{Borrow, BorrowMut}, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 // === Tuple Expansion === //
 
-pub struct TupleRemainder<T>(pub T);
+pub struct TupleRemainder<T> {
+    pub macro_internal_dont_touch: T,
+}
 
 pub struct TupleInputHole {
     _private: (),
@@ -47,7 +49,7 @@ impl<'a: 'b, 'b, {%- for j in range(0, MAX_ARITY) %}P{{j}}: 'a{{ '' if loop.last
     type Target = ({%- for j in range(0, MAX_ARITY) %}&'b mut P{{j}}{{ '' if loop.last else ', ' }}{% endfor -%});
 
     fn normalize_arity(&'b mut self) -> Self::Target {
-        let me = &mut self.0;
+        let me = &mut self.macro_internal_dont_touch;
 
         ({%- for j in range(0, MAX_ARITY) %}&mut me.{{j}}{{ '' if loop.last else ', ' }}{% endfor -%})
     }
@@ -163,6 +165,60 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 
 {% endfor -%}
 
+// === Filter magic === //
+
+pub struct FilterHoles<T>(FilterHolesPositive<T>);
+
+pub struct FilterHolesPositive<T>(PhantomData<T>);
+
+pub trait FilterHolesExtend<T, E> {
+    type Output;
+
+    fn extend(&self, tup: T, elem: E) -> Self::Output;
+}
+
+impl<T> FilterHoles<T> {
+    pub fn new(_infer_dummy: &T) -> Self {
+        Self(FilterHolesPositive(PhantomData))
+    }
+}
+
+impl<T> Deref for FilterHoles<T> {
+    type Target = FilterHolesPositive<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T> FilterHolesExtend<T, &'a mut TupleInputHole> for FilterHoles<&'a mut TupleInputHole> {
+    type Output = T;
+
+    fn extend(&self, tup: T, _elem: &'a mut TupleInputHole) -> T {
+        tup
+    }
+}
+{% for i in range(0, MAX_ARITY + 1) %}
+impl<'a,{{" "}}
+    {%- for j in range(0, i + 1) %}P{{j}}{{"" if loop.last else ", "}}{% endfor -%}
+> FilterHolesExtend<(
+    {%- for j in range(0, i) -%}
+        P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}
+    {%- endfor -%}
+), P{{i}}> for FilterHolesPositive<P{{i}}> {
+    type Output = (
+        {%- for j in range(0, i + 1) -%}
+            P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}
+        {%- endfor -%}
+    );
+
+    fn extend(&self, {{ "tup" if i > 0 else "_tup" }}: ({%- for j in range(0, i) -%}
+        P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}
+    {%- endfor -%}), elem: P{{i}}) -> Self::Output {
+        ({% for j in range(0, i) %}tup.{{j}}, {% endfor %}elem{{"," if i == 0 else "" }})
+    }
+}
+{% endfor %}
 // === Macro definition === //
 
 {% set MACROS_PREFIX = "$crate::macro_internal" -%}
@@ -243,7 +299,6 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// These forms are useful for passing context to a method while allowing you to decompose the
 /// remainder while the borrow is still ongoing.
 ///
-///
 /// ```
 /// use compost::decompose;
 ///
@@ -266,6 +321,9 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// }
 ///
 /// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str, &mut u8)) {
+///     // NOTE: Because `rest`'s tuple layout is unspecified, `rest` is new-typed in a
+///     // macro-internal `TupleRemainder` struct to allow for backwards-compatibility-
+///     // preserving changes to the maximum arity, the search mechanism, etc.
 ///     let (ctor_args, mut cx) = decompose!(...cx);
 ///     let thing_1 = MyThing1::new(ctor_args);
 ///
@@ -286,7 +344,74 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// do_something((&mut 1, &mut 2, &mut 'c', "d", &mut 5));
 /// ```
 ///
-/// ##### ...in a **combination of all three**:
+/// ##### ...in an expression decomposing `TupleRemainder`:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// This one's a bit wacky. Recall how rest tuples aren't actually tuples but rather macro-internal
+/// `TupleRemainder` newtypes that should not, under any circumstance, be tampered with manually? Well,
+/// this form of the macro provides a way to safely tamper with these newtypes.
+///
+/// ```
+/// use compost::decompose;
+///
+/// # fn main() {
+/// let mut cx = (1i32, &2u32, &mut 3u8, 'd', "e");
+///
+/// decompose!(cx => rest & { my_char: &char });
+///
+/// // The type of `rest` is a `TupleRemainder<(...)>` where the type parameter of this
+/// // newtype is an implementation detail. Let's change that!
+/// let rest = decompose!(rest => (&mut ...));
+///
+/// // As the syntax suggests, the type of rest is now...
+/// let rest: (&'_ mut i32, &mut &u32, &mut &mut u8, &mut &str) = rest;
+/// //          ^ these lifetimes are the lifetime  ^ also notice how "&mut char"
+/// //            of the mutable reference to the     is missing but the order is
+/// //            input `rest` variable.              otherwise preserved?
+///
+/// let mut cmp_u8 = &mut 3u8;  // (done because `&mut T` forces `T` to be invariant
+///                             //  w.r.t its lifetime, causing weird type coercions
+///                             // and lifetime errors)
+/// assert_eq!(my_char, &'d');
+/// assert_eq!(rest, (&mut 1i32, &mut &2u32, &mut cmp_u8, &mut "e"));
+///
+/// // Of course, as a gesture of kindness towards other macro authors, this macro
+/// // works for regular tuples as well:
+/// let cx = decompose!(cx => (&mut ...));
+/// let cx: (&'_ mut i32, &mut &u32, &mut &mut u8, &mut char, &mut &str) = cx;
+/// //                                             ^ our "&mut char" is back!
+/// # }
+/// ```
+///
+/// The tuple returned from this form cannot be used in a fashion identical to its soure tuple.
+/// Recall: every element in the tuple now has an additional `&mut` indirection to it.
+///
+/// So, this doesn't work:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// let mut cx = (&1i32, &2u32);
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // works!
+///
+/// let mut cx = decompose!(cx => (&mut ...));
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // doesn't work!
+/// ```
+///
+/// But this does:
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut cx = (&1i32, &2u32);
+/// decompose!(cx => { my_i32: &i32, my_u32: &u32 });  // works!
+///
+/// let mut cx = decompose!(cx => (&mut ...));
+/// decompose!(cx => { my_i32: &mut &i32, my_u32: &&u32 });  // also works but is different!
+/// ```
+///
+/// ##### ...in a **combination of (most of) them**:
 ///
 /// [Jump to the "summary" section](#summary)
 ///
@@ -345,6 +470,14 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 /// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
 ///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow
 ///   with explicit type annotations.
+///
+/// Here is the one form to help you [decompose a `TupleRemainder`](#in-an-expression-decomposing-tupleremainder)
+/// into its actual components:<br>
+///
+/// - `decompose!($expr => (&mut ...)) -> (&mut T1, &mut &T2, &mut &mut T3)`:<br>
+///   Given a mutable reference to a tuple (newtyped through `TupleRemainder` or otherwise), it
+///   decomposes the input tuple into a new tuple with a mutable reference to every component in
+///   that tuple.
 ///
 /// And here are its [statement forms](#in-a-statement):
 ///
@@ -558,7 +691,7 @@ macro_rules! decompose {
                             p{{j}}{{ "" if loop.last else ", " }}
                             {%- endfor -%}
                         )),
-                        {{MACROS_PREFIX}}::TupleRemainder(input)
+                        {{MACROS_PREFIX}}::TupleRemainder { macro_internal_dont_touch: input },
                     )
                 }
             }
@@ -578,6 +711,20 @@ macro_rules! decompose {
     // Regular decomposing expression
     ($input:expr) => {
         $crate::decompose!(...$input).0
+    };
+
+    // Full decomposing expression
+    ($input:expr => (&mut ...)) => {
+        {
+            use {{MACROS_PREFIX}}::{FilterHolesExtend, NormalizeArity};
+            let input = $input.normalize_arity();
+            let builder = ();
+            {% for i in range(0, MAX_ARITY) -%}
+            let builder = {{MACROS_PREFIX}}::FilterHoles::new(&input.{{i}}).extend(builder, input.{{i}});
+            {%- endfor %}
+
+            builder
+        }
     };
 
     // Annotated regular decomposing expression
@@ -602,5 +749,5 @@ macro_rules! decompose {
         $(,)?
     }) => {
         $crate::decompose!($input => _ignored & { $($name:$ty),* });
-    }
+    };
 }{{"\n"}}
