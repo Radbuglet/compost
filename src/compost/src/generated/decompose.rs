@@ -548,7 +548,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// let mut input = (1i32, &mut 2u32, 'c');
 ///
 /// fn example(cx: (&i32, &mut u32)) {
-///     dbg!(cx);
+///     assert_eq!(cx, (&1, &mut 2));
 /// }
 ///
 /// // Can be used when calling a function...
@@ -556,9 +556,11 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///
 /// // ...or when assigning to a variable.
 /// let cx_subset: (&mut u32, &mut char) = decompose!(input);
+/// assert_eq!(cx_subset, (&mut 2, &mut 'c'));
 ///
 /// // Which is equivalent to:
 /// let cx_subset = decompose!(input => (&mut u32, &mut char));
+/// assert_eq!(cx_subset, (&mut 2, &mut 'c'));
 /// ```
 ///
 /// ...in a **statement:**
@@ -566,30 +568,30 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 /// ```
 /// use compost::decompose;
 ///
-/// let mut input = (1i32, &mut 2u32, 'c', 1.3f32);
+/// let mut input = (1i32, &mut 2u32, 'c', 5u8);
 ///
-/// // Brings component references into scope and produces
-/// // a `rest` value containing the remaining components.
+/// // Brings component references into scope and produces a `rest` value containing
+/// //the remaining components.
 /// //
-/// // NOTE: Because `rest`'s tuple layout is unspecified, `rest`
-/// // is new-typed in a macro-internal `TupleRemainder` struct
-/// // to allow for backwards-compatibility-preserving changes to
-/// // the maximum arity, the search mechanism, etc.
+/// // NOTE: Because `rest`'s tuple layout is unspecified, `rest` is new-typed in a
+/// // macro-internal `TupleRemainder` struct to allow for backwards-compatibility-
+/// // preserving changes to the maximum arity, the search mechanism, etc.
 /// decompose!(input => rest & {
 ///     my_char: &mut char,
 ///     my_i32: &i32,
 /// });
 ///
-/// dbg!((my_char, my_i32));
+/// assert_eq!((my_char, my_i32), (&mut 'c', &1));
 ///
 /// // `rest` can itself be decomposed several times.
 /// decompose!(rest => rest & { my_u32: &u32 });
 ///
 /// // If you're done decomposing, you can omit the `rest` parameter.
-/// decompose!(rest => { my_f32: &mut f32 });
+/// decompose!(rest => { my_u8: &mut u8 });
 ///
-/// dbg!((my_u32, my_f32));  // (borrows from multiple decompose statements simultaneously)
-/// dbg!(my_i32);  // (remains valid!)
+/// // (borrows from multiple decompose statements simultaneously)
+/// assert_eq!((my_u32, my_u8), (&2, &mut 5));
+/// assert_eq!(my_i32, &1);  // (remains valid!)
 /// ```
 ///
 /// ...in an **expression** producing a "rest" tuple:
@@ -625,16 +627,15 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///     dbg!(&thing_1);
 ///     dbg!(&thing_2);
 ///
-///     let the_str = decompose!(cx => (&str));
-///     dbg!(the_str);
-///
 ///     // This syntax can also be combined with the type-annotated tuple syntax.
-///     let (the_str, mut rest): ((&str,), _) = decompose!(...cx => (&str));
+///     let (the_str, mut cx) = decompose!(...cx => (&str));
 ///     dbg!(the_str);
 ///
-///     let the_u8 = decompose!(rest => (&u8));
+///     let the_u8 = decompose!(cx => (&u8));
 ///     dbg!(the_u8);
 /// }
+///
+/// do_something((&mut 1, &mut 2, &mut 'c', "d", &mut 5));
 /// ```
 ///
 /// ...in a **combination of all three**:
@@ -674,6 +675,31 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 ///     dbg!(my_char);
 /// }
 /// ```
+///
+/// ### Summary
+///
+/// In summary, here are the **expression forms** available for this macro:
+///
+/// - `decompose!($expr) -> (T1, T2, T3)`:<br>
+///   Decomposes a tuple into a subset tuple.
+///
+/// - `decompose!(...$expr) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
+///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow.
+///
+/// - `decompose!($expr => ($T1, $T2, $T3)) -> (T1, T2, T3)`:<br>
+///   Decomposes a tuple into a subset tuple with explicit type annotations.
+///
+/// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), TupleRemainder<_>)`:<br>
+///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow.
+///
+/// And here are its **statement forms**:
+///
+/// - `decompose!($expr => { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
+///   Decomposes a tuple into `n` different components and brings them in scope under the specified
+///   names.
+/// - `decompose!($expr => $rest_name & { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
+///   Decomposes a tuple into `n` different components and brings them in scope under the specified
+///   names. Brings the remainder of the input tuple into scope under the specified `$rest_name`.
 ///
 /// ## What Can Be Borrowed?
 ///
