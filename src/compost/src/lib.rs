@@ -1,32 +1,45 @@
 //! # Overview
 //!
-//! This library exposes [`decompose!`], a macro to decompose tuples into tuples containing a
-//! subset of their values.
+//! This library exposes [`decompose!`](crate::decompose), a macro to decompose tuples into tuples
+//! containing a subset of their values.
 //!
 //! ```
 //! use compost::decompose;
 //!
-//! let mut cx = (&1u32, &mut 2i32, 'c', "d", Box::new(5u8), 6i8);
+//! // Pack all your context into a tuple...
+//! let mut cx = (&mut 1u32, &2u8, (&3u16, &mut 'e', "f", &mut [1, 2, 3]));
 //!
-//! fn function_taking_subset(cx: (&u32, &i32, &mut u8)) {
-//!     dbg!(cx);
+//! // And cal your target function!
+//! consumer(decompose!(cx));
+//!
+//! // Define functions taking tuples of context...
+//! fn consumer_2((a, b, c, d, e): (&u32, &str, &char, &f32, &i8)) {
+//!     dbg!(a, b, c, d, e);
 //! }
 //!
-//! function_taking_subset(decompose!(cx));
+//! fn consumer_3((f, g, h): (&char, &str, &mut [u8; 3])) {
+//!     dbg!(f, g, h);
+//! }
 //!
-//! decompose!(cx => cx_rest & {
-//!     value_1: &str,
-//!     value_2: &mut char,
-//! });
+//! fn consumer(mut cx: (&mut u32, &char, &str, &mut [u8; 3])) {
+//!     // Bring types into scope and produce a remainder tuple.
+//!     decompose!(cx => rest & {
+//!         char: &char,
+//!         bytes: &mut [u8; 3],
+//!     });
 //!
-//! dbg!((value_1, value_2));
+//!     // Combine contexts...
+//!     let mut rest = (rest, (&mut 4.3f32, &-4i8), &mut 5i16);
 //!
-//! decompose!(cx_rest => { value_3: &u32, value_4: &mut i8 });
+//!     // ...and forward them to further functions.
+//!     consumer_2(decompose!(rest));
 //!
-//! dbg!((value_3, value_4));
+//!     // ...all without invalidating existing borrows!
+//!     dbg!(char, bytes);
 //!
-//! function_taking_subset(decompose!(cx_rest));
-//! function_taking_subset(decompose!(cx));
+//!     // Reborrow the original context after its borrows have expired.
+//!     consumer_3(decompose!(cx));
+//! }
 //! ```
 //!
 //! See [`decompose!`]'s documentation for more details on the precise semantics and
@@ -39,25 +52,24 @@
 //! - Supports reborrowing (i.e. `decompose!` does not consume its input. Once you're done
 //!    with the borrow, you can reuse the original tuple).
 //! - Produces (admittedly pretty ugly) errors at compile time if the tuple cannot be decomposed.
-//! - Supports borrowing mutable, immutable, owned, and smart-pointer wrapped (so long as they implement
-//!   [`Borrow`](core::borrow::Borrow)) components.
+//! - Supports borrowing mutable, immutable, and smart-pointer wrapped (so long as they implement
+//!   [`Deref`](::core::ops::Deref)) components.
+//! - Supports borrowing from nested tuple trees, allowing you to borrow from an arbitrary number of
+//!   components simultaneously and to quickly merge multiple context tuples by packing them into a
+//!   single tuple.
 //! - Supports borrowing generic elements without failing spuriously on monomorphization.
 //! - Relies on type inference rather than `TypeId`, allowing the macro to operate on non-`'static` types.
-//! - Supports `no_std` environments.
+//! - Supports `no_std` environments and does not rely on unsafe code.
 //! - Has zero runtime dependencies.
 //!
 
 #![no_std]
+#![forbid(unsafe_code)]
 
-#[macro_use]
-#[path = "generated/decompose.rs"]
 mod decompose;
 
 #[doc(hidden)]
 pub mod macro_internal {
     pub use super::decompose::*;
-    pub use core::{
-        convert::identity,
-        option::Option::{None, Some},
-    };
+    pub use core::option::Option::{None, Some};
 }

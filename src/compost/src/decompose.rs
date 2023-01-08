@@ -1,6 +1,6 @@
 use core::{
-	marker::PhantomData,
-	ops::{Deref, DerefMut},
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
 };
 
 // === ContextExtract === //
@@ -16,7 +16,7 @@ pub trait ContextExtract<T, D> {
 
 pub struct IdentityDisambiguator;
 
-impl<'r, T> ContextExtract<&'r mut T, IdentityDisambiguator> for &'r mut T {
+impl<'r, T: ?Sized> ContextExtract<&'r mut T, IdentityDisambiguator> for &'r mut T {
     type Rest = ContextHole;
 
     fn extract(self) -> (&'r mut T, Self::Rest) {
@@ -24,7 +24,7 @@ impl<'r, T> ContextExtract<&'r mut T, IdentityDisambiguator> for &'r mut T {
     }
 }
 
-impl<'r, T> ContextExtract<&'r T, IdentityDisambiguator> for &'r mut T {
+impl<'r, T: ?Sized> ContextExtract<&'r T, IdentityDisambiguator> for &'r mut T {
     type Rest = &'r T;
 
     fn extract(self) -> (&'r T, Self::Rest) {
@@ -32,7 +32,7 @@ impl<'r, T> ContextExtract<&'r T, IdentityDisambiguator> for &'r mut T {
     }
 }
 
-impl<'r, T> ContextExtract<&'r T, IdentityDisambiguator> for &'r T {
+impl<'r, T: ?Sized> ContextExtract<&'r T, IdentityDisambiguator> for &'r T {
     type Rest = &'r T;
 
     fn extract(self) -> (&'r T, Self::Rest) {
@@ -42,7 +42,7 @@ impl<'r, T> ContextExtract<&'r T, IdentityDisambiguator> for &'r T {
 
 pub struct DerefDisambiguator;
 
-impl<'r, T: DerefMut> ContextExtract<&'r mut T::Target, DerefDisambiguator> for &'r mut T {
+impl<'r, T: ?Sized + DerefMut> ContextExtract<&'r mut T::Target, DerefDisambiguator> for &'r mut T {
     type Rest = ContextHole;
 
     fn extract(self) -> (&'r mut T::Target, Self::Rest) {
@@ -50,7 +50,7 @@ impl<'r, T: DerefMut> ContextExtract<&'r mut T::Target, DerefDisambiguator> for 
     }
 }
 
-impl<'r, T: Deref> ContextExtract<&'r T::Target, DerefDisambiguator> for &'r mut T {
+impl<'r, T: ?Sized + Deref> ContextExtract<&'r T::Target, DerefDisambiguator> for &'r mut T {
     type Rest = &'r T;
 
     fn extract(self) -> (&'r T::Target, Self::Rest) {
@@ -58,7 +58,7 @@ impl<'r, T: Deref> ContextExtract<&'r T::Target, DerefDisambiguator> for &'r mut
     }
 }
 
-impl<'r, T: Deref> ContextExtract<&'r T::Target, DerefDisambiguator> for &'r T {
+impl<'r, T: ?Sized + Deref> ContextExtract<&'r T::Target, DerefDisambiguator> for &'r T {
     type Rest = &'r T;
 
     fn extract(self) -> (&'r T::Target, Self::Rest) {
@@ -111,6 +111,14 @@ impl<T: ReduceNonTerminal> Reduce for T {
 }
 
 impl Reduce for ContextHole {
+    type Reduced = ();
+
+    fn reduce(self) -> Self::Reduced {
+        ()
+    }
+}
+
+impl Reduce for () {
     type Reduced = ();
 
     fn reduce(self) -> Self::Reduced {
@@ -185,6 +193,14 @@ impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
 
     fn cons_tuple(&'r mut self) -> Self::Output {
         self
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>> ConsTuple<'r> for (P0,) {
+    type Output = P0::Output;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self.0.cons_tuple()
     }
 }
 
@@ -436,6 +452,388 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 
 // === Decompose === //
 
+/// This macro takes a **mutable reference** to a tuple and decomposes it into a sub-tuple
+/// (i.e. a tuple containing a subset of the values contained in the parent tuple).
+///
+/// ## Syntax
+///
+/// There are three ways in which this macro can be used...
+///
+/// ##### ...in an **expression**:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful when calling a function with a desired subset of the available context.
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut input = (&mut 1i32, &mut 2u32, &mut Box::new('c'));
+///
+/// fn example(cx: (&i32, &mut u32)) {
+///     assert_eq!(cx, (&1, &mut 2));
+/// }
+///
+/// // Can be used when calling a function...
+/// example(decompose!(input));
+///
+/// // ...or when assigning to a variable.
+/// let cx_subset: (&mut u32, &mut char) = decompose!(input);
+/// assert_eq!(cx_subset, (&mut 2, &mut 'c'));
+///
+/// // Which is equivalent to:
+/// let cx_subset = decompose!(input => (&mut u32, &mut char));
+/// assert_eq!(cx_subset, (&mut 2, &mut 'c'));
+/// ```
+///
+/// ##### ...in a **statement:**
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful for pulling context contained in a tuple into scope.
+///
+/// ```
+/// use compost::decompose;
+///
+/// let mut input = (&mut 1i32, &mut 2u32, (&mut 'c', &mut Box::new(5u8), &4f32));
+///
+/// // Brings component references into scope and produces a `rest` value containing the remaining
+/// // components.
+/// decompose!(input => rest & {
+///     my_char: &mut char,
+///     my_i32: &i32,
+/// });
+///
+/// assert_eq!((my_char, my_i32), (&mut 'c', &1));
+///
+/// // `rest` can itself be decomposed several times.
+/// // Note that we can borrow the `&i32` component immutably more than once.
+/// decompose!(rest => rest & { my_i32_again: &i32, my_u32: &u32 });
+///
+/// assert_eq!(my_i32, my_i32_again);
+///
+/// // If you're done decomposing, you can omit the `rest` parameter.
+/// decompose!(rest => { my_u8: &mut u8 });
+///
+/// // (borrows from multiple decompose statements simultaneously)
+/// assert_eq!((my_u32, my_u8), (&2, &mut 5));
+/// assert_eq!(my_i32, &1);  // (remains valid!)
+/// ```
+///
+/// ##### ...in an **expression** producing a "rest" tuple:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// These forms are useful for passing context to a method while allowing you to decompose the
+/// remainder while the borrow is still ongoing.
+///
+/// ```
+/// use compost::decompose;
+///
+/// #[derive(Debug)]
+/// struct MyThing1<'a>(&'a mut i32, &'a mut u32);
+///
+/// impl<'a> MyThing1<'a> {
+///     fn new((a, b): (&'a mut i32, &'a mut u32)) -> Self {
+///         Self(a, b)
+///     }
+/// }
+///
+/// #[derive(Debug)]
+/// struct MyThing2<'a>(&'a mut char);
+///
+/// impl<'a> MyThing2<'a> {
+///     fn new((c,): (&'a mut char,)) -> Self {
+///         Self(c)
+///     }
+/// }
+///
+/// fn do_something(mut cx: (&mut i32, &mut u32, &mut char, &str, &mut u8)) {
+///     let (ctor_args, mut cx) = decompose!(...cx);
+///     let thing_1 = MyThing1::new(ctor_args);
+///
+///     let (ctor_args, mut cx) = decompose!(...cx);
+///     let thing_2 = MyThing2::new(ctor_args);
+///
+///     dbg!(&thing_1);
+///     dbg!(&thing_2);
+///
+///     // This syntax can also be combined with the type-annotated tuple syntax.
+///     let (the_str, mut cx) = decompose!(...cx => (&str));
+///     dbg!(the_str);
+///
+///     let the_u8 = decompose!(cx => (&u8));
+///     dbg!(the_u8);
+/// }
+///
+/// do_something((&mut 1, &mut 2, &mut 'c', "d", &mut 5));
+/// ```
+///
+/// ##### ...in a **combination of all of them**:
+///
+/// [Jump to the "summary" section](#summary)
+///
+/// ```
+/// use compost::decompose;
+///
+/// struct MyThing {
+/// # /*
+///     ...
+/// # */
+/// }
+///
+/// impl MyThing {
+///     pub fn do_something<'a>(&mut self, deps: (&'a u32, &'a mut i32, &'a char)) -> &'a char {
+///         dbg!(&deps);
+///         deps.2
+///     }
+///
+///     pub fn do_something_else(&mut self, deps: (&u8,)) {
+///         dbg!(deps);
+///     }
+/// }
+///
+/// fn do_something(mut cx: (&mut MyThing, &mut u32, &mut i32, &mut char, &mut Box<u8>)) {
+///     // Acquire a reference to the `MyThing` instance.
+///     decompose!(cx => cx_rest & { thing: &mut MyThing });
+///
+///     // Call a method on it with even more context.
+///     let (args, mut cx_rest) = decompose!(...cx_rest);
+///     let my_char = thing.do_something(args);
+///
+///     // Call another unrelated method without rest decomposition.
+///     thing.do_something_else(decompose!(cx_rest));
+///
+///     // `my_char` remains valid!
+///     dbg!(my_char);
+/// }
+/// ```
+///
+/// ### Summary
+///
+/// In summary, here are the [expression forms](#in-an-expression) available for this macro:
+///
+/// - `decompose!($expr) -> (T1, T2, T3)`:<br>
+///   Decomposes a tuple into a subset tuple.
+///
+/// - `decompose!($expr => ($T1, $T2, $T3)) -> (T1, T2, T3)`:<br>
+///   Decomposes a tuple into a subset tuple with explicit type annotations.
+///
+/// Here are the [expression with rest forms](#in-an-expression-producing-a-rest-tuple) available for
+/// this macro:
+///
+/// - `decompose!(...$expr) -> ((T1, T2, T3), <remainder binary tuple tree>)`:<br>
+///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow.
+///
+/// - `decompose!(...$expr => ($T1, $T2, $T3)) -> ((T1, T2, T3), <remainder binary tuple tree>)`:<br>
+///   Decomposes a tuple into a subset tuple and the remainder of the input tuple after the borrow
+///   with explicit type annotations.
+///
+/// And here are its [statement forms](#in-a-statement):
+///
+/// - `decompose!($expr => { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
+///   Decomposes a tuple into `n` different components and brings them in scope under the specified
+///   names.
+///
+/// - `decompose!($expr => $rest_name & { $var_1: $T1, $var_2: $T2, $var_3: $T3 });`:<br>
+///   Decomposes a tuple into `n` different components and brings them in scope under the specified
+///   names. Brings the remainder of the input tuple into scope under the specified `$rest_name`.
+///
+/// ## What Can Be Borrowed?
+///
+/// ##### Rule 1
+///
+/// `decompose!` expects a mutable reference to the tuple it is decomposing. Thus, this is not valid:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn example(cx: (&i32, &u32)) {
+///     decompose!(cx => { my_i32: &i32 });
+///     dbg!(my_i32);
+/// }
+/// ```
+///
+/// but this is:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &u32)) {  // (see how the `cx` variable itself is now mut?)
+///     decompose!(cx => { my_i32: &i32 });
+///     dbg!(my_i32);
+/// }
+/// ```
+///
+///  ##### Rule 2
+///
+/// `decompose!` always consumes references (i.e. `&T` and `&mut T` but not smart pointers) and
+/// (potentially nested) tuples containing references. It does not accept smart pointers directly
+/// (e.g. `(Box<T>, Ref<T>)`)—you must give references to them instead (e.g. `(&mut Box<T>, &Ref<T>)`).
+///
+/// `decompose!` always produces single-level tuples (possibly with zero or one items).
+///
+/// Thus, this is not valid because we are decomposing into a single reference, not a tuple:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: &i32) {
+///     dbg!(cx);
+/// }
+///
+/// fn example(mut cx: (&i32, &u32)) {
+///     takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+/// We can fix this by wrapping the component in a tuple with a single element:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: (&i32,)) {  // (notice the trailing comma?)
+///     dbg!(cx);
+/// }
+///
+/// fn example(mut cx: (&i32, &u32)) {
+///     takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+/// Note the **trailing comma** in `(&i32,)`, which differentiates single element tuples from
+/// grouping parentheses around types.
+///
+/// Additionally, this is not valid because `Box<T>` is a smart-pointer, not a regular reference:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: (&mut i32,)) {
+///     dbg!(cx);
+/// }
+///
+/// fn example(mut cx: (Box<i32>, &u32)) {
+///     takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+/// We can fix this by taking a mutable reference to the box instead:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn takes_cx(cx: (&mut i32,)) {
+///     dbg!(cx);
+/// }
+///
+/// fn example(mut cx: (&mut Box<i32>, &u32)) {
+///     takes_cx(decompose!(cx));
+/// }
+/// ```
+///
+///  ##### Rule 3
+///
+/// A reference can be decomposed from an input tuple if the input tuple has some element of that type
+/// or implements [`Deref<T>`](Deref) to that specific type `T`.
+///
+/// ```
+/// use core::ops::Deref;
+/// use compost::decompose;
+///
+/// fn example<T: Deref<Target = V>, V>(mut cx: (&mut T,)) {
+///     decompose!(cx => { v: &V });
+///
+///     // Of course, you can still borrow the original value as well...
+///     decompose!(cx => { v: &mut T });
+/// }
+/// ```
+///
+/// Note that, currently, only one level of deref coercion is valid. Thus, this will not compile:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn consumer(cx: (&str,)) {
+///     dbg!(cx);
+/// }
+///
+/// let mut cx = (&mut Box::new("whee".to_string()), &mut 4u32);
+///
+/// consumer(decompose!(cx));
+/// ```
+///
+/// but this will:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn consumer(cx: (&str,)) {
+///     dbg!(cx);
+/// }
+///
+/// let mut cx = (&mut "whee".to_string(),);
+///
+/// consumer(decompose!(cx));
+/// ```
+///
+///  ##### Rule 4
+///
+/// The element of the tuple being borrowed must be unambiguous. This implies, in the general case,
+/// that you cannot borrow an element when that element is present multiple times in the input tuple:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, (&mut i32, &u32), &mut Box<u32>)) {
+///     decompose!(cx => {
+///         my_i32: &i32,  // Where do we get the `i32`?
+///         my_u32: &u32,  // Where do we get the `u32`?
+///     });
+///     dbg!((my_i32, my_u32));
+/// }
+/// ```
+///
+/// Funnily enough, this works:
+///
+/// ```
+/// use compost::decompose;
+///
+/// fn example(mut cx: (&i32, &mut i32, &u32, &mut Box<u32>, &char, (&char, &char))) {
+///     decompose!(cx => {
+///         // There's only one element in the input tuple that can give a **mutable reference** to
+///         // these respective elements.
+///         my_i32: &mut i32,
+///         my_u32: &mut u32,
+///
+///         // Also, even though `&char` shows up *thrice* in the context tuple, it
+///         // is not used anywhere in the decomposition so it is fine.
+///     });
+///     dbg!((my_i32, my_u32));
+/// }
+/// ```
+///
+/// ## Caveats
+///
+/// **Caveat 1:** Because variadic tuples are not a thing yet, the maximum arity of (number of elements in)
+/// both the input and output tuples is **12**. This value is configurable in the source code
+/// (see: `src/decompose.rs.jinja`'s `MAX_ARITY` template variable). Note that you can still create
+/// input tuples providing more than 12 elements by nesting them.
+///
+/// **Caveat 2:** Because `decompose!` consumes a mutable reference to the tuple being decomposed:
+///
+/// 1. The tuple must be marked as mutable (but you already knew that).
+/// 2. Tuple temporaries cannot be decomposed and returned from the function.
+///
+/// Thus, this fails to compile:
+///
+/// ```compile_fail
+/// use compost::decompose;
+///
+/// fn give_me_some_things<'a>(mut cx: (&'a u32, &'a mut i32)) -> (&'a u32, &'a i32) {
+///     decompose!(cx)
+/// }
+/// ```
 #[macro_export]
 macro_rules! decompose {
     // "Rest" decomposing expression
@@ -512,14 +910,14 @@ macro_rules! decompose {
         }
     };
 
-	// Annotated "rest" decomposing expression
+    // Annotated "rest" decomposing expression
     (...$input:expr => (
         $($ty:ty),*$(,)?
     )) => {
-        $crate::macro_internal::identity::<(
-            ($($ty,)*),
-            _,
-        )>($crate::decompose!(...$input))
+        {
+            let result: (($($ty,)*), _) = $crate::decompose!(...$input);
+            result
+        }
     };
 
     // Regular decomposing expression
@@ -527,14 +925,17 @@ macro_rules! decompose {
         $crate::decompose!(...$input).0
     };
 
-	// Annotated regular decomposing expression
+    // Annotated regular decomposing expression
     ($input:expr => (
         $($ty:ty),*$(,)?
     )) => {
-        $crate::macro_internal::identity::<($($ty,)*)>($crate::decompose!($input))
+        {
+            let result: ($($ty,)*) = $crate::decompose!($input);
+            result
+        }
     };
 
-	// "Rest" decomposing statement
+    // "Rest" decomposing statement
     ($input:expr => $rest:ident & {
         $($name:ident: $ty:ty),*
         $(,)?
