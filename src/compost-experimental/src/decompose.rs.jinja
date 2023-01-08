@@ -1,0 +1,171 @@
+{%- set MAX_ARITY = 12 -%}
+
+use core::marker::PhantomData;
+use crate::{Context, ContextExtract};
+
+// === ConsTuple === //
+
+pub trait ConsTuple<'r> {
+	type Output;
+
+	fn cons_tuple(&'r mut self) -> Self::Output;
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
+	type Output = &'r T;
+
+	fn cons_tuple(&'r mut self) -> Self::Output {
+		self
+	}
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
+	type Output = &'r mut T;
+
+	fn cons_tuple(&'r mut self) -> Self::Output {
+		self
+	}
+}
+
+{% for i in range(2, MAX_ARITY + 1) -%}
+impl<'r, {% for j in range(0, i) -%}
+	P{{j}}: ConsTuple<'r>{{"" if loop.last else ", "}}
+{%- endfor -%}> ConsTuple<'r> for (
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+) {
+	type Output = {{""}}
+		{%- for j in range(0, i - 1) -%}({%- endfor -%}
+		{% for j in range(0, i) %}P{{j}}::Output{{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %};
+
+	fn cons_tuple(&'r mut self) -> Self::Output {
+		{% for j in range(0, i - 1) -%}({%- endfor -%}
+		{% for j in range(0, i) %}self.{{j}}.cons_tuple(){{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %}
+	}
+}
+
+{% endfor -%}
+
+// === TupleBuilder === //
+
+pub trait ContextExtractOrHole<'r, T, D> {
+	type OrHoleRest;
+
+	fn extract_or_hole(&'r mut self) -> (T, Self::OrHoleRest);
+}
+
+impl<'r, E: ContextExtract<'r, T, D>, T, D> ContextExtractOrHole<'r, T, (D,)> for E {
+	type OrHoleRest = E::Rest;
+
+	fn extract_or_hole(&'r mut self) -> (T, Self::OrHoleRest) {
+		self.extract()
+	}
+}
+
+impl<'r, E: Context<'r>> ContextExtractOrHole<'r, TupleOutputHole, TupleOutputHole> for E {
+	type OrHoleRest = E::Reborrowed;
+
+	fn extract_or_hole(&'r mut self) -> (TupleOutputHole, Self::OrHoleRest) {
+		(TupleOutputHole { _private: () }, self.reborrow())
+	}
+}
+
+pub struct TupleOutputHole {
+    _private: (),
+}
+
+pub struct TupleBuilder<T> {
+    _ty: PhantomData<T>,
+}
+
+impl<T> TupleBuilder<T> {
+    pub fn new() -> Self {
+        Self { _ty: PhantomData, }
+    }
+
+    pub fn inference_helper(&self) -> Option<T> {
+        None
+    }
+}
+
+pub trait TupleBuilderId<V, R>: Sized {
+    fn id(self, v: V) -> (V, TupleBuilder<R>) {
+        (v, TupleBuilder::new())
+    }
+}
+
+impl TupleBuilderId<TupleOutputHole, ()> for TupleBuilder<()> {}
+
+{% for i in range(1, MAX_ARITY + 1) -%}
+impl<
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{% endfor -%}
+> TupleBuilderId<P0, (
+    {%- for j in range(1, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+)> for TupleBuilder<(
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+)> {}
+
+{% endfor -%}
+
+// === ArityTruncate === //
+
+pub trait ArityTruncate<R> {
+    fn truncate_arity(self) -> R;
+}
+
+{% for i in range(0, MAX_ARITY + 1) %}
+{%- set truncate_tup -%}
+({% for j in range(0, i) %}P{{j}}{{ "" if loop.last else ", " }}{{ "," if i == 1 else "" }}{% endfor %})
+{%- endset -%}
+
+{%- set full_paras -%}
+{% for j in range(0, MAX_ARITY) %}P{{j}}{{ "" if loop.last else ", " }}{% endfor %}
+{%- endset -%}
+impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
+    fn truncate_arity(self) -> {{truncate_tup}} {
+        ({% for j in range(0, i) %}self.{{j}}{{"" if loop.last else ", " }}{{ "," if i == 1 else ""}}{% endfor %})
+    }
+}
+
+{% endfor -%}
+
+// === Decompose === //
+
+{% set MACROS_PREFIX = "$crate::decompose_macro_internal" -%}
+
+#[macro_export]
+macro_rules! decompose {
+    // "Rest" decomposing expression
+    (...$input:expr) => {
+        {
+            use {{MACROS_PREFIX}}::ConsTuple;
+            let mut input = $input.cons_tuple();
+            let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
+
+            match builder.inference_helper() {
+                {{MACROS_PREFIX}}::Some(var) => {
+                    fn any<T>() -> T {
+                        loop {}
+                    }
+                    (var, any())
+                },
+                {{MACROS_PREFIX}}::None => {
+                    {%- for j in range(0, MAX_ARITY) %}
+                    let (v, input) = {{MACROS_PREFIX}}::ContextExtractOrHole::extract_or_hole(&mut input);
+					let mut input = {{MACROS_PREFIX}}::Reduce::reduce(input);
+                    let (p{{j}}, builder) = {{MACROS_PREFIX}}::TupleBuilderId::id(builder, v);{{"\n"}}
+                    {%- endfor %}
+                    let _builder = builder;
+
+                    (
+                        {{MACROS_PREFIX}}::ArityTruncate::truncate_arity((
+                            {%- for j in range(0, MAX_ARITY) -%}
+                            p{{j}}{{ "" if loop.last else ", " }}
+                            {%- endfor -%}
+                        )),
+                        input,
+                    )
+                }
+            }
+        }
+    };
+}
