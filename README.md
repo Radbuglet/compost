@@ -13,7 +13,7 @@
 
 ## Overview
 
-This library exposes [`decompose!`](https://docs.rs/compost/latest/compost/decompose/), a macro to decompose tuples into tuples
+This library exposes `decompose!`, a macro to decompose tuples into tuples
 containing a subset of their values.
 
 ```rust
@@ -55,7 +55,7 @@ fn consumer(mut cx: (&mut u32, &char, &str, &mut [u8; 3])) {
 }
 ```
 
-See [`decompose!`]'s documentation for more details on the precise semantics and
+See `decompose!`'s documentation for more details on the precise semantics and
 limitations of the macro.
 
 ### Features

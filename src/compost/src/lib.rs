@@ -42,7 +42,7 @@
 //! }
 //! ```
 //!
-//! See [`decompose!`]'s documentation for more details on the precise semantics and
+//! See [`decompose!`](crate::decompose)'s documentation for more details on the precise semantics and
 //! limitations of the macro.
 //!
 //! ## Features
@@ -66,10 +66,12 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-mod decompose;
+// Necessary to avoid ambiguous doc link to `crate::decompose`.
+#[path = "decompose.rs"]
+mod decompose_impl;
 
 #[doc(hidden)]
 pub mod macro_internal {
-    pub use super::decompose::*;
+    pub use super::decompose_impl::*;
     pub use core::option::Option::{None, Some};
 }
