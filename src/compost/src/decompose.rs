@@ -180,6 +180,21 @@ pub trait ConsTuple<'r> {
     fn cons_tuple(&'r mut self) -> Self::Output;
 }
 
+pub fn bind_and_run<T, F, R>(target: T, f: F) -> R
+where
+    F: FnOnce(T) -> R,
+{
+    f(target)
+}
+
+pub fn cons_tuple_and_run<'r, T, F, R>(target: &'r mut T, f: F) -> R
+where
+    T: ConsTuple<'r>,
+    F: FnOnce(T::Output) -> R,
+{
+    f(target.cons_tuple())
+}
+
 impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
     type Output = &'r T;
 
@@ -838,9 +853,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 macro_rules! decompose {
     // "Rest" decomposing expression
     (...$input:expr) => {
-        {
-            use $crate::macro_internal::ConsTuple;
-            let input = $input.cons_tuple();
+        $crate::macro_internal::cons_tuple_and_run(&mut $input, |input| {
             let builder = $crate::macro_internal::TupleBuilder::new();
 
             match builder.inference_helper() {
@@ -907,17 +920,14 @@ macro_rules! decompose {
                     )
                 }
             }
-        }
+        })
     };
 
     // Annotated "rest" decomposing expression
     (...$input:expr => (
         $($ty:ty),*$(,)?
     )) => {
-        {
-            let result: (($($ty,)*), _) = $crate::decompose!(...$input);
-            result
-        }
+        $crate::macro_internal::bind_and_run($crate::decompose!(...$input), |v: (($($ty,)*), _)| v)
     };
 
     // Regular decomposing expression
@@ -929,10 +939,7 @@ macro_rules! decompose {
     ($input:expr => (
         $($ty:ty),*$(,)?
     )) => {
-        {
-            let result: ($($ty,)*) = $crate::decompose!($input);
-            result
-        }
+        $crate::macro_internal::bind_and_run($crate::decompose!($input), |v: ($($ty,)*)| v)
     };
 
     // "Rest" decomposing statement
