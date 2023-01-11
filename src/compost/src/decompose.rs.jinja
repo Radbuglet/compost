@@ -5,10 +5,87 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
-// === ContextExtract === //
+// === ContextTuple === //
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct ContextHole;
+pub trait ContextTuple<'r> {
+	type Reborrowed;
+
+	fn reborrow(&'r mut self) -> Self::Reborrowed;
+
+	fn extend<T>(&'r mut self, and: T) -> (Self::Reborrowed, T) {
+		(self.reborrow(), and)
+	}
+}
+
+pub trait ConsTuple<'r> {
+    type Output;
+
+    fn cons_tuple(&'r mut self) -> Self::Output;
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
+    type Output = &'r T;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self
+    }
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
+    type Output = &'r mut T;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>> ConsTuple<'r> for (P0,) {
+    type Output = P0::Output;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self.0.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>> ContextTuple<'r> for (P0,) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+{% for i in range(2, MAX_ARITY + 1) -%}
+impl<'r, {% for j in range(0, i) -%}
+    P{{j}}: ConsTuple<'r>{{"" if loop.last else ", "}}
+{%- endfor -%}> ConsTuple<'r> for (
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+) {
+    type Output = {{""}}
+        {%- for j in range(0, i - 1) -%}({%- endfor -%}
+        {% for j in range(0, i) %}P{{j}}::Output{{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %};
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        {% for j in range(0, i - 1) -%}({%- endfor -%}
+        {% for j in range(0, i) %}self.{{j}}.cons_tuple(){{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %}
+    }
+}
+
+impl<'r, {% for j in range(0, i) -%}
+    P{{j}}: ConsTuple<'r>{{"" if loop.last else ", "}}
+{%- endfor -%}> ContextTuple<'r> for (
+    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
+) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+{% endfor -%}
+
+// === ContextExtract === //
 
 pub trait ContextExtract<T, D> {
     type Rest;
@@ -19,10 +96,10 @@ pub trait ContextExtract<T, D> {
 pub struct IdentityDisambiguator;
 
 impl<'r, T: ?Sized> ContextExtract<&'r mut T, IdentityDisambiguator> for &'r mut T {
-    type Rest = ContextHole;
+    type Rest = ();
 
     fn extract(self) -> (&'r mut T, Self::Rest) {
-        (self, ContextHole)
+        (self, ())
     }
 }
 
@@ -45,10 +122,10 @@ impl<'r, T: ?Sized> ContextExtract<&'r T, IdentityDisambiguator> for &'r T {
 pub struct DerefDisambiguator;
 
 impl<'r, T: ?Sized + DerefMut> ContextExtract<&'r mut T::Target, DerefDisambiguator> for &'r mut T {
-    type Rest = ContextHole;
+    type Rest = ();
 
     fn extract(self) -> (&'r mut T::Target, Self::Rest) {
-        (self, ContextHole)
+        (self, ())
     }
 }
 
@@ -112,14 +189,6 @@ impl<T: ReduceNonTerminal> Reduce for T {
     }
 }
 
-impl Reduce for ContextHole {
-    type Reduced = ();
-
-    fn reduce(self) -> Self::Reduced {
-        ()
-    }
-}
-
 impl Reduce for () {
     type Reduced = ();
 
@@ -158,7 +227,7 @@ impl<A: ReduceNonTerminal, B: ReduceNonTerminal> ReduceNonTerminal for (A, B) {
     }
 }
 
-impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ContextHole) {
+impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ()) {
     type ReducedNonTerminal = A::ReducedNonTerminal;
 
     fn reduce_non_terminal(self) -> Self::ReducedNonTerminal {
@@ -166,78 +235,13 @@ impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ContextHole) {
     }
 }
 
-impl<B: ReduceNonTerminal> ReduceNonTerminal for (ContextHole, B) {
+impl<B: ReduceNonTerminal> ReduceNonTerminal for ((), B) {
     type ReducedNonTerminal = B::ReducedNonTerminal;
 
     fn reduce_non_terminal(self) -> Self::ReducedNonTerminal {
         self.1.reduce_non_terminal()
     }
 }
-
-// === ConsTuple === //
-
-pub trait ConsTuple<'r> {
-    type Output;
-
-    fn cons_tuple(&'r mut self) -> Self::Output;
-}
-
-pub fn bind_and_run<T, F, R>(target: T, f: F) -> R
-where
-    F: FnOnce(T) -> R,
-{
-    f(target)
-}
-
-pub fn cons_tuple_and_run<'r, T, F, R>(target: &'r mut T, f: F) -> R
-where
-    T: ConsTuple<'r>,
-    F: FnOnce(T::Output) -> R,
-{
-    f(target.cons_tuple())
-}
-
-impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
-    type Output = &'r T;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self
-    }
-}
-
-impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
-    type Output = &'r mut T;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>> ConsTuple<'r> for (P0,) {
-    type Output = P0::Output;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self.0.cons_tuple()
-    }
-}
-
-{% for i in range(2, MAX_ARITY + 1) -%}
-impl<'r, {% for j in range(0, i) -%}
-    P{{j}}: ConsTuple<'r>{{"" if loop.last else ", "}}
-{%- endfor -%}> ConsTuple<'r> for (
-    {%- for j in range(0, i) %}P{{j}}{{"" if loop.last else ", "}}{{ "," if loop.first and loop.last else "" }}{% endfor -%}
-) {
-    type Output = {{""}}
-        {%- for j in range(0, i - 1) -%}({%- endfor -%}
-        {% for j in range(0, i) %}P{{j}}::Output{{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %};
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        {% for j in range(0, i - 1) -%}({%- endfor -%}
-        {% for j in range(0, i) %}self.{{j}}.cons_tuple(){{"" if loop.first else ")"}}{{"" if loop.last else ", "}}{% endfor %}
-    }
-}
-
-{% endfor -%}
 
 // === TupleBuilder === //
 
@@ -321,6 +325,23 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 }
 
 {% endfor -%}
+
+// === Decompose helpers === //
+
+pub fn bind_and_run<T, F, R>(target: T, f: F) -> R
+where
+    F: FnOnce(T) -> R,
+{
+    f(target)
+}
+
+pub fn reborrow_tuple_and_run<'r, T, F, R>(target: &'r mut T, f: F) -> R
+where
+    T: ContextTuple<'r>,
+    F: FnOnce(T::Reborrowed) -> R,
+{
+    f(target.reborrow())
+}
 
 // === Decompose === //
 
@@ -712,7 +733,7 @@ impl<{{full_paras}}> ArityTruncate<{{truncate_tup}}> for ({{full_paras}}) {
 macro_rules! decompose {
     // "Rest" decomposing expression
     (...$input:expr) => {
-        {{MACROS_PREFIX}}::cons_tuple_and_run(&mut $input, |input| {
+        {{MACROS_PREFIX}}::reborrow_tuple_and_run(&mut $input, |input| {
             let builder = {{MACROS_PREFIX}}::TupleBuilder::new();
 
             match builder.inference_helper() {

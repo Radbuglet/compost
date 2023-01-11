@@ -70,6 +70,10 @@
 #[path = "decompose.rs"]
 mod decompose_impl;
 
+// We don't need to re-export `decompose!` because `#[macro_export]` already hoists it to the crate
+// root.
+pub use decompose_impl::ContextTuple;
+
 #[doc(hidden)]
 pub mod macro_internal {
     pub use super::decompose_impl::*;

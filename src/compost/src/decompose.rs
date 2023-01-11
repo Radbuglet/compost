@@ -3,10 +3,233 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
-// === ContextExtract === //
+// === ContextTuple === //
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct ContextHole;
+pub trait ContextTuple<'r> {
+	type Reborrowed;
+
+	fn reborrow(&'r mut self) -> Self::Reborrowed;
+
+	fn extend<T>(&'r mut self, and: T) -> (Self::Reborrowed, T) {
+		(self.reborrow(), and)
+	}
+}
+
+pub trait ConsTuple<'r> {
+    type Output;
+
+    fn cons_tuple(&'r mut self) -> Self::Output;
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
+    type Output = &'r T;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self
+    }
+}
+
+impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
+    type Output = &'r mut T;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>> ConsTuple<'r> for (P0,) {
+    type Output = P0::Output;
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        self.0.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>> ContextTuple<'r> for (P0,) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>> ConsTuple<'r> for (P0, P1) {
+    type Output = (P0::Output, P1::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (self.0.cons_tuple(), self.1.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>> ContextTuple<'r> for (P0, P1) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2) {
+    type Output = ((P0::Output, P1::Output), P2::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        ((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3) {
+    type Output = (((P0::Output, P1::Output), P2::Output), P3::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4) {
+    type Output = ((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        ((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5) {
+    type Output = (((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6) {
+    type Output = ((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        ((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7) {
+    type Output = (((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8) {
+    type Output = ((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        ((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9) {
+    type Output = (((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) {
+    type Output = ((((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output), P10::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        ((((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple()), self.10.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>, P11: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
+    type Output = (((((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output), P10::Output), P11::Output);
+
+    fn cons_tuple(&'r mut self) -> Self::Output {
+        (((((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple()), self.10.cons_tuple()), self.11.cons_tuple())
+    }
+}
+
+impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>, P11: ConsTuple<'r>> ContextTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
+    type Reborrowed = <Self as ConsTuple<'r>>::Output;
+
+    fn reborrow(&'r mut self) -> Self::Reborrowed {
+        self.cons_tuple()
+    }
+}
+
+// === ContextExtract === //
 
 pub trait ContextExtract<T, D> {
     type Rest;
@@ -17,10 +240,10 @@ pub trait ContextExtract<T, D> {
 pub struct IdentityDisambiguator;
 
 impl<'r, T: ?Sized> ContextExtract<&'r mut T, IdentityDisambiguator> for &'r mut T {
-    type Rest = ContextHole;
+    type Rest = ();
 
     fn extract(self) -> (&'r mut T, Self::Rest) {
-        (self, ContextHole)
+        (self, ())
     }
 }
 
@@ -43,10 +266,10 @@ impl<'r, T: ?Sized> ContextExtract<&'r T, IdentityDisambiguator> for &'r T {
 pub struct DerefDisambiguator;
 
 impl<'r, T: ?Sized + DerefMut> ContextExtract<&'r mut T::Target, DerefDisambiguator> for &'r mut T {
-    type Rest = ContextHole;
+    type Rest = ();
 
     fn extract(self) -> (&'r mut T::Target, Self::Rest) {
-        (self, ContextHole)
+        (self, ())
     }
 }
 
@@ -110,14 +333,6 @@ impl<T: ReduceNonTerminal> Reduce for T {
     }
 }
 
-impl Reduce for ContextHole {
-    type Reduced = ();
-
-    fn reduce(self) -> Self::Reduced {
-        ()
-    }
-}
-
 impl Reduce for () {
     type Reduced = ();
 
@@ -156,7 +371,7 @@ impl<A: ReduceNonTerminal, B: ReduceNonTerminal> ReduceNonTerminal for (A, B) {
     }
 }
 
-impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ContextHole) {
+impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ()) {
     type ReducedNonTerminal = A::ReducedNonTerminal;
 
     fn reduce_non_terminal(self) -> Self::ReducedNonTerminal {
@@ -164,146 +379,11 @@ impl<A: ReduceNonTerminal> ReduceNonTerminal for (A, ContextHole) {
     }
 }
 
-impl<B: ReduceNonTerminal> ReduceNonTerminal for (ContextHole, B) {
+impl<B: ReduceNonTerminal> ReduceNonTerminal for ((), B) {
     type ReducedNonTerminal = B::ReducedNonTerminal;
 
     fn reduce_non_terminal(self) -> Self::ReducedNonTerminal {
         self.1.reduce_non_terminal()
-    }
-}
-
-// === ConsTuple === //
-
-pub trait ConsTuple<'r> {
-    type Output;
-
-    fn cons_tuple(&'r mut self) -> Self::Output;
-}
-
-pub fn bind_and_run<T, F, R>(target: T, f: F) -> R
-where
-    F: FnOnce(T) -> R,
-{
-    f(target)
-}
-
-pub fn cons_tuple_and_run<'r, T, F, R>(target: &'r mut T, f: F) -> R
-where
-    T: ConsTuple<'r>,
-    F: FnOnce(T::Output) -> R,
-{
-    f(target.cons_tuple())
-}
-
-impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p T {
-    type Output = &'r T;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self
-    }
-}
-
-impl<'p: 'r, 'r, T: ?Sized> ConsTuple<'r> for &'p mut T {
-    type Output = &'r mut T;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>> ConsTuple<'r> for (P0,) {
-    type Output = P0::Output;
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        self.0.cons_tuple()
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>> ConsTuple<'r> for (P0, P1) {
-    type Output = (P0::Output, P1::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (self.0.cons_tuple(), self.1.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2) {
-    type Output = ((P0::Output, P1::Output), P2::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        ((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3) {
-    type Output = (((P0::Output, P1::Output), P2::Output), P3::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4) {
-    type Output = ((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        ((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5) {
-    type Output = (((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6) {
-    type Output = ((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        ((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7) {
-    type Output = (((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8) {
-    type Output = ((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        ((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9) {
-    type Output = (((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) {
-    type Output = ((((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output), P10::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        ((((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple()), self.10.cons_tuple())
-    }
-}
-
-impl<'r, P0: ConsTuple<'r>, P1: ConsTuple<'r>, P2: ConsTuple<'r>, P3: ConsTuple<'r>, P4: ConsTuple<'r>, P5: ConsTuple<'r>, P6: ConsTuple<'r>, P7: ConsTuple<'r>, P8: ConsTuple<'r>, P9: ConsTuple<'r>, P10: ConsTuple<'r>, P11: ConsTuple<'r>> ConsTuple<'r> for (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
-    type Output = (((((((((((P0::Output, P1::Output), P2::Output), P3::Output), P4::Output), P5::Output), P6::Output), P7::Output), P8::Output), P9::Output), P10::Output), P11::Output);
-
-    fn cons_tuple(&'r mut self) -> Self::Output {
-        (((((((((((self.0.cons_tuple(), self.1.cons_tuple()), self.2.cons_tuple()), self.3.cons_tuple()), self.4.cons_tuple()), self.5.cons_tuple()), self.6.cons_tuple()), self.7.cons_tuple()), self.8.cons_tuple()), self.9.cons_tuple()), self.10.cons_tuple()), self.11.cons_tuple())
     }
 }
 
@@ -463,6 +543,23 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
     fn truncate_arity(self) -> (P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) {
         (self.0, self.1, self.2, self.3, self.4, self.5, self.6, self.7, self.8, self.9, self.10, self.11)
     }
+}
+
+// === Decompose helpers === //
+
+pub fn bind_and_run<T, F, R>(target: T, f: F) -> R
+where
+    F: FnOnce(T) -> R,
+{
+    f(target)
+}
+
+pub fn reborrow_tuple_and_run<'r, T, F, R>(target: &'r mut T, f: F) -> R
+where
+    T: ContextTuple<'r>,
+    F: FnOnce(T::Reborrowed) -> R,
+{
+    f(target.reborrow())
 }
 
 // === Decompose === //
@@ -853,7 +950,7 @@ impl<P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> ArityTruncate<(P0, P1, P2
 macro_rules! decompose {
     // "Rest" decomposing expression
     (...$input:expr) => {
-        $crate::macro_internal::cons_tuple_and_run(&mut $input, |input| {
+        $crate::macro_internal::reborrow_tuple_and_run(&mut $input, |input| {
             let builder = $crate::macro_internal::TupleBuilder::new();
 
             match builder.inference_helper() {
