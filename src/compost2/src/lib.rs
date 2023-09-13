@@ -5,21 +5,7 @@ pub struct NoValue;
 use NoValue as N;
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
-#[non_exhaustive]
-pub struct Context<
-    A = N,
-    B = N,
-    C = N,
-    D = N,
-    E = N,
-    F = N,
-    G = N,
-    H = N,
-    I = N,
-    J = N,
-    K = N,
-    L = N,
->(
+pub struct Cx<A = N, B = N, C = N, D = N, E = N, F = N, G = N, H = N, I = N, J = N, K = N, L = N>(
     pub A,
     pub B,
     pub C,
@@ -34,62 +20,62 @@ pub struct Context<
     pub L,
 );
 
-impl From<()> for Context {
+impl From<()> for Cx {
     fn from((): ()) -> Self {
         Self(N, N, N, N, N, N, N, N, N, N, N, N)
     }
 }
 
-impl<A> From<(A,)> for Context<A> {
+impl<A> From<(A,)> for Cx<A> {
     fn from((a,): (A,)) -> Self {
         Self(a, N, N, N, N, N, N, N, N, N, N, N)
     }
 }
 
-impl<A, B> From<(A, B)> for Context<A, B> {
+impl<A, B> From<(A, B)> for Cx<A, B> {
     fn from((a, b): (A, B)) -> Self {
         Self(a, b, N, N, N, N, N, N, N, N, N, N)
     }
 }
 
-impl<A, B, C> From<(A, B, C)> for Context<A, B, C> {
+impl<A, B, C> From<(A, B, C)> for Cx<A, B, C> {
     fn from((a, b, c): (A, B, C)) -> Self {
         Self(a, b, c, N, N, N, N, N, N, N, N, N)
     }
 }
 
-impl<A, B, C, D> From<(A, B, C, D)> for Context<A, B, C, D> {
+impl<A, B, C, D> From<(A, B, C, D)> for Cx<A, B, C, D> {
     fn from((a, b, c, d): (A, B, C, D)) -> Self {
         Self(a, b, c, d, N, N, N, N, N, N, N, N)
     }
 }
 
-impl<A, B, C, D, E> From<(A, B, C, D, E)> for Context<A, B, C, D, E> {
+impl<A, B, C, D, E> From<(A, B, C, D, E)> for Cx<A, B, C, D, E> {
     fn from((a, b, c, d, e): (A, B, C, D, E)) -> Self {
         Self(a, b, c, d, e, N, N, N, N, N, N, N)
     }
 }
 
-impl<A, B, C, D, E, F> From<(A, B, C, D, E, F)> for Context<A, B, C, D, E, F> {
+impl<A, B, C, D, E, F> From<(A, B, C, D, E, F)> for Cx<A, B, C, D, E, F> {
     fn from((a, b, c, d, e, f): (A, B, C, D, E, F)) -> Self {
         Self(a, b, c, d, e, f, N, N, N, N, N, N)
     }
 }
 
-impl<A, B, C, D, E, F, G> From<(A, B, C, D, E, F, G)> for Context<A, B, C, D, E, F, G> {
+impl<A, B, C, D, E, F, G> From<(A, B, C, D, E, F, G)> for Cx<A, B, C, D, E, F, G> {
     fn from((a, b, c, d, e, f, g): (A, B, C, D, E, F, G)) -> Self {
         Self(a, b, c, d, e, f, g, N, N, N, N, N)
     }
 }
 
-impl<A, B, C, D, E, F, G, H> From<(A, B, C, D, E, F, G, H)> for Context<A, B, C, D, E, F, G, H> {
+impl<A, B, C, D, E, F, G, H> From<(A, B, C, D, E, F, G, H)> for Cx<A, B, C, D, E, F, G, H> {
     fn from((a, b, c, d, e, f, g, h): (A, B, C, D, E, F, G, H)) -> Self {
         Self(a, b, c, d, e, f, g, h, N, N, N, N)
     }
 }
 
 impl<A, B, C, D, E, F, G, H, I> From<(A, B, C, D, E, F, G, H, I)>
-    for Context<A, B, C, D, E, F, G, H, I>
+    for Cx<A, B, C, D, E, F, G, H, I>
 {
     fn from((a, b, c, d, e, f, g, h, i): (A, B, C, D, E, F, G, H, I)) -> Self {
         Self(a, b, c, d, e, f, g, h, i, N, N, N)
@@ -97,7 +83,7 @@ impl<A, B, C, D, E, F, G, H, I> From<(A, B, C, D, E, F, G, H, I)>
 }
 
 impl<A, B, C, D, E, F, G, H, I, J> From<(A, B, C, D, E, F, G, H, I, J)>
-    for Context<A, B, C, D, E, F, G, H, I, J>
+    for Cx<A, B, C, D, E, F, G, H, I, J>
 {
     fn from((a, b, c, d, e, f, g, h, i, j): (A, B, C, D, E, F, G, H, I, J)) -> Self {
         Self(a, b, c, d, e, f, g, h, i, j, N, N)
@@ -105,7 +91,7 @@ impl<A, B, C, D, E, F, G, H, I, J> From<(A, B, C, D, E, F, G, H, I, J)>
 }
 
 impl<A, B, C, D, E, F, G, H, I, J, K> From<(A, B, C, D, E, F, G, H, I, J, K)>
-    for Context<A, B, C, D, E, F, G, H, I, J, K>
+    for Cx<A, B, C, D, E, F, G, H, I, J, K>
 {
     fn from((a, b, c, d, e, f, g, h, i, j, k): (A, B, C, D, E, F, G, H, I, J, K)) -> Self {
         Self(a, b, c, d, e, f, g, h, i, j, k, N)
@@ -113,7 +99,7 @@ impl<A, B, C, D, E, F, G, H, I, J, K> From<(A, B, C, D, E, F, G, H, I, J, K)>
 }
 
 impl<A, B, C, D, E, F, G, H, I, J, K, L> From<(A, B, C, D, E, F, G, H, I, J, K, L)>
-    for Context<A, B, C, D, E, F, G, H, I, J, K, L>
+    for Cx<A, B, C, D, E, F, G, H, I, J, K, L>
 {
     fn from((a, b, c, d, e, f, g, h, i, j, k, l): (A, B, C, D, E, F, G, H, I, J, K, L)) -> Self {
         Self(a, b, c, d, e, f, g, h, i, j, k, l)
@@ -125,7 +111,7 @@ impl<A, B, C, D, E, F, G, H, I, J, K, L> From<(A, B, C, D, E, F, G, H, I, J, K, 
 pub mod macro_internals {
     use std::ops::Deref;
 
-    use crate::{Context, NoValue};
+    use crate::{Cx, NoValue};
 
     // Binder
     pub struct Binder<T>([T; 0]);
@@ -174,7 +160,7 @@ pub mod macro_internals {
 
         fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2, T>(
             &self,
-            _curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+            _curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
             _value: T,
         ) -> ! {
             unreachable!();
@@ -196,7 +182,7 @@ pub mod macro_internals {
 
         fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
             &self,
-            curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+            curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
             value: Self::Borrowed,
         ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -227,18 +213,18 @@ pub mod macro_internals {
 
         impl<'a, A: ?Sized, B, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorA>
-            for ContextAsksFor2<Context<&'a mut A, B, C, D, E, F, G, H, I, J, K, L>, &'a mut A>
+            for ContextAsksFor2<Cx<&'a mut A, B, C, D, E, F, G, H, I, J, K, L>, &'a mut A>
         {
             type Borrowed = &'a mut A;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<&'a mut A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<&'a mut A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     value,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -257,18 +243,18 @@ pub mod macro_internals {
 
         impl<'a, A, B: ?Sized, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorB>
-            for ContextAsksFor2<Context<A, &'a mut B, C, D, E, F, G, H, I, J, K, L>, &'a mut B>
+            for ContextAsksFor2<Cx<A, &'a mut B, C, D, E, F, G, H, I, J, K, L>, &'a mut B>
         {
             type Borrowed = &'a mut B;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, &'a mut B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, &'a mut B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     value,
                     curr_borrow_cx.2,
@@ -287,18 +273,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C: ?Sized, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorC>
-            for ContextAsksFor2<Context<A, B, &'a mut C, D, E, F, G, H, I, J, K, L>, &'a mut C>
+            for ContextAsksFor2<Cx<A, B, &'a mut C, D, E, F, G, H, I, J, K, L>, &'a mut C>
         {
             type Borrowed = &'a mut C;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, &'a mut C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, &'a mut C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     value,
@@ -317,18 +303,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D: ?Sized, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorD>
-            for ContextAsksFor2<Context<A, B, C, &'a mut D, E, F, G, H, I, J, K, L>, &'a mut D>
+            for ContextAsksFor2<Cx<A, B, C, &'a mut D, E, F, G, H, I, J, K, L>, &'a mut D>
         {
             type Borrowed = &'a mut D;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, &'a mut D, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, &'a mut D, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -347,18 +333,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E: ?Sized, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorE>
-            for ContextAsksFor2<Context<A, B, C, D, &'a mut E, F, G, H, I, J, K, L>, &'a mut E>
+            for ContextAsksFor2<Cx<A, B, C, D, &'a mut E, F, G, H, I, J, K, L>, &'a mut E>
         {
             type Borrowed = &'a mut E;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, &'a mut E, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, &'a mut E, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -377,18 +363,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F: ?Sized, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorF>
-            for ContextAsksFor2<Context<A, B, C, D, E, &'a mut F, G, H, I, J, K, L>, &'a mut F>
+            for ContextAsksFor2<Cx<A, B, C, D, E, &'a mut F, G, H, I, J, K, L>, &'a mut F>
         {
             type Borrowed = &'a mut F;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, &'a mut F, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, &'a mut F, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -407,18 +393,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G: ?Sized, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorG>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, &'a mut G, H, I, J, K, L>, &'a mut G>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, &'a mut G, H, I, J, K, L>, &'a mut G>
         {
             type Borrowed = &'a mut G;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, &'a mut G, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, &'a mut G, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -437,18 +423,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H: ?Sized, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorH>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, &'a mut H, I, J, K, L>, &'a mut H>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, &'a mut H, I, J, K, L>, &'a mut H>
         {
             type Borrowed = &'a mut H;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, &'a mut H, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, &'a mut H, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -467,18 +453,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I: ?Sized, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorI>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, &'a mut I, J, K, L>, &'a mut I>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, &'a mut I, J, K, L>, &'a mut I>
         {
             type Borrowed = &'a mut I;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, &'a mut I, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, &'a mut I, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -497,18 +483,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J: ?Sized, K, L>
             ContextAsksForResolverSuccess<DisambiguatorJ>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, &'a mut J, K, L>, &'a mut J>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, &'a mut J, K, L>, &'a mut J>
         {
             type Borrowed = &'a mut J;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a mut J, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a mut J, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -527,18 +513,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K: ?Sized, L>
             ContextAsksForResolverSuccess<DisambiguatorK>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, &'a mut K, L>, &'a mut K>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, &'a mut K, L>, &'a mut K>
         {
             type Borrowed = &'a mut K;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a mut K, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a mut K, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -557,18 +543,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K, L: ?Sized>
             ContextAsksForResolverSuccess<DisambiguatorL>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, K, &'a mut L>, &'a mut L>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, K, &'a mut L>, &'a mut L>
         {
             type Borrowed = &'a mut L;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a mut L>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a mut L>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -591,18 +577,18 @@ pub mod macro_internals {
 
         impl<'a, A: ?Sized, B, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorA>
-            for ContextAsksFor2<Context<&'a A, B, C, D, E, F, G, H, I, J, K, L>, &'a mut A>
+            for ContextAsksFor2<Cx<&'a A, B, C, D, E, F, G, H, I, J, K, L>, &'a mut A>
         {
             type Borrowed = &'a mut A;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<&'a A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<&'a A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     value,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -621,18 +607,18 @@ pub mod macro_internals {
 
         impl<'a, A, B: ?Sized, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorB>
-            for ContextAsksFor2<Context<A, &'a B, C, D, E, F, G, H, I, J, K, L>, &'a mut B>
+            for ContextAsksFor2<Cx<A, &'a B, C, D, E, F, G, H, I, J, K, L>, &'a mut B>
         {
             type Borrowed = &'a mut B;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, &'a B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, &'a B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     value,
                     curr_borrow_cx.2,
@@ -651,18 +637,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C: ?Sized, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorC>
-            for ContextAsksFor2<Context<A, B, &'a C, D, E, F, G, H, I, J, K, L>, &'a mut C>
+            for ContextAsksFor2<Cx<A, B, &'a C, D, E, F, G, H, I, J, K, L>, &'a mut C>
         {
             type Borrowed = &'a mut C;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, &'a C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, &'a C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     value,
@@ -681,18 +667,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D: ?Sized, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorD>
-            for ContextAsksFor2<Context<A, B, C, &'a D, E, F, G, H, I, J, K, L>, &'a mut D>
+            for ContextAsksFor2<Cx<A, B, C, &'a D, E, F, G, H, I, J, K, L>, &'a mut D>
         {
             type Borrowed = &'a mut D;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, &'a D, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, &'a D, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -711,18 +697,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E: ?Sized, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorE>
-            for ContextAsksFor2<Context<A, B, C, D, &'a E, F, G, H, I, J, K, L>, &'a mut E>
+            for ContextAsksFor2<Cx<A, B, C, D, &'a E, F, G, H, I, J, K, L>, &'a mut E>
         {
             type Borrowed = &'a mut E;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, &'a E, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, &'a E, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -741,18 +727,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F: ?Sized, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorF>
-            for ContextAsksFor2<Context<A, B, C, D, E, &'a F, G, H, I, J, K, L>, &'a mut F>
+            for ContextAsksFor2<Cx<A, B, C, D, E, &'a F, G, H, I, J, K, L>, &'a mut F>
         {
             type Borrowed = &'a mut F;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, &'a F, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, &'a F, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -771,18 +757,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G: ?Sized, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorG>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, &'a G, H, I, J, K, L>, &'a mut G>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, &'a G, H, I, J, K, L>, &'a mut G>
         {
             type Borrowed = &'a mut G;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, &'a G, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, &'a G, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -801,18 +787,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H: ?Sized, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorH>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, &'a H, I, J, K, L>, &'a mut H>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, &'a H, I, J, K, L>, &'a mut H>
         {
             type Borrowed = &'a mut H;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, &'a H, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, &'a H, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -831,18 +817,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I: ?Sized, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorI>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, &'a I, J, K, L>, &'a mut I>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, &'a I, J, K, L>, &'a mut I>
         {
             type Borrowed = &'a mut I;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, &'a I, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, &'a I, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -861,18 +847,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J: ?Sized, K, L>
             ContextAsksForResolverSuccess<DisambiguatorJ>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, &'a J, K, L>, &'a mut J>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, &'a J, K, L>, &'a mut J>
         {
             type Borrowed = &'a mut J;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a J, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a J, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -891,18 +877,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K: ?Sized, L>
             ContextAsksForResolverSuccess<DisambiguatorK>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, &'a K, L>, &'a mut K>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, &'a K, L>, &'a mut K>
         {
             type Borrowed = &'a mut K;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a K, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a K, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -921,18 +907,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K, L: ?Sized>
             ContextAsksForResolverSuccess<DisambiguatorL>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, K, &'a L>, &'a mut L>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, K, &'a L>, &'a mut L>
         {
             type Borrowed = &'a mut L;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a L>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a L>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -955,18 +941,18 @@ pub mod macro_internals {
 
         impl<'a, A: ?Sized, B, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorA>
-            for ContextAsksFor2<Context<&'a A, B, C, D, E, F, G, H, I, J, K, L>, &'a A>
+            for ContextAsksFor2<Cx<&'a A, B, C, D, E, F, G, H, I, J, K, L>, &'a A>
         {
             type Borrowed = &'a A;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<&'a A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<&'a A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     value,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -985,18 +971,18 @@ pub mod macro_internals {
 
         impl<'a, A, B: ?Sized, C, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorB>
-            for ContextAsksFor2<Context<A, &'a B, C, D, E, F, G, H, I, J, K, L>, &'a B>
+            for ContextAsksFor2<Cx<A, &'a B, C, D, E, F, G, H, I, J, K, L>, &'a B>
         {
             type Borrowed = &'a B;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, &'a B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, &'a B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     value,
                     curr_borrow_cx.2,
@@ -1015,18 +1001,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C: ?Sized, D, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorC>
-            for ContextAsksFor2<Context<A, B, &'a C, D, E, F, G, H, I, J, K, L>, &'a C>
+            for ContextAsksFor2<Cx<A, B, &'a C, D, E, F, G, H, I, J, K, L>, &'a C>
         {
             type Borrowed = &'a C;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, &'a C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, &'a C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     value,
@@ -1045,18 +1031,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D: ?Sized, E, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorD>
-            for ContextAsksFor2<Context<A, B, C, &'a D, E, F, G, H, I, J, K, L>, &'a D>
+            for ContextAsksFor2<Cx<A, B, C, &'a D, E, F, G, H, I, J, K, L>, &'a D>
         {
             type Borrowed = &'a D;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, &'a D, E2, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, &'a D, E2, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1075,18 +1061,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E: ?Sized, F, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorE>
-            for ContextAsksFor2<Context<A, B, C, D, &'a E, F, G, H, I, J, K, L>, &'a E>
+            for ContextAsksFor2<Cx<A, B, C, D, &'a E, F, G, H, I, J, K, L>, &'a E>
         {
             type Borrowed = &'a E;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, &'a E, F2, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, &'a E, F2, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1105,18 +1091,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F: ?Sized, G, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorF>
-            for ContextAsksFor2<Context<A, B, C, D, E, &'a F, G, H, I, J, K, L>, &'a F>
+            for ContextAsksFor2<Cx<A, B, C, D, E, &'a F, G, H, I, J, K, L>, &'a F>
         {
             type Borrowed = &'a F;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, &'a F, G2, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, &'a F, G2, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1135,18 +1121,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G: ?Sized, H, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorG>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, &'a G, H, I, J, K, L>, &'a G>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, &'a G, H, I, J, K, L>, &'a G>
         {
             type Borrowed = &'a G;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, &'a G, H2, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, &'a G, H2, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1165,18 +1151,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H: ?Sized, I, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorH>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, &'a H, I, J, K, L>, &'a H>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, &'a H, I, J, K, L>, &'a H>
         {
             type Borrowed = &'a H;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, &'a H, I2, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, &'a H, I2, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1195,18 +1181,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I: ?Sized, J, K, L>
             ContextAsksForResolverSuccess<DisambiguatorI>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, &'a I, J, K, L>, &'a I>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, &'a I, J, K, L>, &'a I>
         {
             type Borrowed = &'a I;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, &'a I, J2, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, &'a I, J2, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1225,18 +1211,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J: ?Sized, K, L>
             ContextAsksForResolverSuccess<DisambiguatorJ>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, &'a J, K, L>, &'a J>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, &'a J, K, L>, &'a J>
         {
             type Borrowed = &'a J;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a J, K2, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a J, K2, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1255,18 +1241,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K: ?Sized, L>
             ContextAsksForResolverSuccess<DisambiguatorK>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, &'a K, L>, &'a K>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, &'a K, L>, &'a K>
         {
             type Borrowed = &'a K;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a K, L2>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a K, L2>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1285,18 +1271,18 @@ pub mod macro_internals {
 
         impl<'a, A, B, C, D, E, F, G, H, I, J, K, L: ?Sized>
             ContextAsksForResolverSuccess<DisambiguatorL>
-            for ContextAsksFor2<Context<A, B, C, D, E, F, G, H, I, J, K, &'a L>, &'a L>
+            for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, K, &'a L>, &'a L>
         {
             type Borrowed = &'a L;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
-                Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a L>;
+                Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a L>;
 
             fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
                 &self,
-                curr_borrow_cx: Context<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
+                curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
                 value: Self::Borrowed,
             ) -> Self::InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> {
-                Context(
+                Cx(
                     curr_borrow_cx.0,
                     curr_borrow_cx.1,
                     curr_borrow_cx.2,
@@ -1316,13 +1302,13 @@ pub mod macro_internals {
 
     // assert_is_context
     pub fn assert_is_context<A, B, C, D, E, F, G, H, I, J, K, L>(
-        _cx: &Context<A, B, C, D, E, F, G, H, I, J, K, L>,
+        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
     ) -> ! {
         unreachable!();
     }
 
     pub fn assert_is_context_and_bind<A, B, C, D, E, F, G, H, I, J, K, L>(
-        _cx: &Context<A, B, C, D, E, F, G, H, I, J, K, L>,
+        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
         _binds: &(
             Binder<A>,
             Binder<B>,
@@ -1362,7 +1348,7 @@ macro_rules! cx {
             }
 
 			// Construct the resulting context
-			let new_context = $crate::Context::from(());
+			let new_context = $crate::Cx::from(());
 
 			$(
 				// Ensure that the `$cx` identifier points to an appropriate context.
