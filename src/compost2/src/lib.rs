@@ -579,7 +579,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorA>
             for ContextAsksFor2<Cx<&'a A, B, C, D, E, F, G, H, I, J, K, L>, &'a mut A>
         {
-            type Borrowed = &'a mut A;
+            type Borrowed = &'a A;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<&'a A, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -609,7 +609,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorB>
             for ContextAsksFor2<Cx<A, &'a B, C, D, E, F, G, H, I, J, K, L>, &'a mut B>
         {
-            type Borrowed = &'a mut B;
+            type Borrowed = &'a B;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, &'a B, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -639,7 +639,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorC>
             for ContextAsksFor2<Cx<A, B, &'a C, D, E, F, G, H, I, J, K, L>, &'a mut C>
         {
-            type Borrowed = &'a mut C;
+            type Borrowed = &'a C;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, &'a C, D2, E2, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -669,7 +669,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorD>
             for ContextAsksFor2<Cx<A, B, C, &'a D, E, F, G, H, I, J, K, L>, &'a mut D>
         {
-            type Borrowed = &'a mut D;
+            type Borrowed = &'a D;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, &'a D, E2, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -699,7 +699,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorE>
             for ContextAsksFor2<Cx<A, B, C, D, &'a E, F, G, H, I, J, K, L>, &'a mut E>
         {
-            type Borrowed = &'a mut E;
+            type Borrowed = &'a E;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, &'a E, F2, G2, H2, I2, J2, K2, L2>;
 
@@ -729,7 +729,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorF>
             for ContextAsksFor2<Cx<A, B, C, D, E, &'a F, G, H, I, J, K, L>, &'a mut F>
         {
-            type Borrowed = &'a mut F;
+            type Borrowed = &'a F;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, &'a F, G2, H2, I2, J2, K2, L2>;
 
@@ -759,7 +759,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorG>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, &'a G, H, I, J, K, L>, &'a mut G>
         {
-            type Borrowed = &'a mut G;
+            type Borrowed = &'a G;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, &'a G, H2, I2, J2, K2, L2>;
 
@@ -789,7 +789,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorH>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, G, &'a H, I, J, K, L>, &'a mut H>
         {
-            type Borrowed = &'a mut H;
+            type Borrowed = &'a H;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, G2, &'a H, I2, J2, K2, L2>;
 
@@ -819,7 +819,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorI>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, &'a I, J, K, L>, &'a mut I>
         {
-            type Borrowed = &'a mut I;
+            type Borrowed = &'a I;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, G2, H2, &'a I, J2, K2, L2>;
 
@@ -849,7 +849,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorJ>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, &'a J, K, L>, &'a mut J>
         {
-            type Borrowed = &'a mut J;
+            type Borrowed = &'a J;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, &'a J, K2, L2>;
 
@@ -879,7 +879,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorK>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, &'a K, L>, &'a mut K>
         {
-            type Borrowed = &'a mut K;
+            type Borrowed = &'a K;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, &'a K, L2>;
 
@@ -909,7 +909,7 @@ pub mod macro_internals {
             ContextAsksForResolverSuccess<DisambiguatorL>
             for ContextAsksFor2<Cx<A, B, C, D, E, F, G, H, I, J, K, &'a L>, &'a mut L>
         {
-            type Borrowed = &'a mut L;
+            type Borrowed = &'a L;
             type InjectedIn<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2> =
                 Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, &'a L>;
 
@@ -1459,4 +1459,34 @@ macro_rules! cx {
             new_context
         }
     };
+}
+
+// === Tests === //
+
+#[cfg(test)]
+#[allow(dead_code)]
+fn tests() {
+    fn produce<T>() -> T {
+        unreachable!()
+    }
+
+    fn extract<T: ?Sized>(t: Cx<&T>) -> &T {
+        t.0
+    }
+
+    fn extract_mut<T: ?Sized>(t: Cx<&mut T>) -> &mut T {
+        t.0
+    }
+
+    let cx: Cx<&mut u32, &i32, &mut str> = produce();
+    let a = extract::<u32>(cx!(cx));
+    let b = extract::<u32>(cx!(cx));
+    let _ = (a, b);
+
+    let c = extract_mut::<u32>(cx!(cx));
+    let d = extract::<i32>(cx!(cx));
+    let _ = (c, d);
+
+    let e = extract_mut::<str>(cx!(cx));
+    let _ = (d, e);
 }
