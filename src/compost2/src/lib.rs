@@ -1330,7 +1330,7 @@ pub mod macro_internals {
 
 #[macro_export]
 macro_rules! cx {
-    ($($cx:ident),+$(,)?) => {
+    (dangerously_specify_place $({$($cx:tt)*}),+$(,)?) => {
         'a: {
             #[allow(unused_imports)]
             use $crate::macro_internals::{
@@ -1368,89 +1368,89 @@ macro_rules! cx {
 				);
 				if false {
 					// Returns `!` so the borrow doesn't disrupt anything.
-					$crate::macro_internals::assert_is_context_and_bind(&$cx, &cx_binds);
+					$crate::macro_internals::assert_is_context_and_bind(&$($cx)*, &cx_binds);
 				}
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.0);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.0)
+					ask.inject_it_in(new_context, $($cx)*.0)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.1);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.1)
+					ask.inject_it_in(new_context, $($cx)*.1)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.2);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.2)
+					ask.inject_it_in(new_context, $($cx)*.2)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.3);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.3)
+					ask.inject_it_in(new_context, $($cx)*.3)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.4);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.4)
+					ask.inject_it_in(new_context, $($cx)*.4)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.5);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.5)
+					ask.inject_it_in(new_context, $($cx)*.5)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.6);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.6)
+					ask.inject_it_in(new_context, $($cx)*.6)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.7);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.7)
+					ask.inject_it_in(new_context, $($cx)*.7)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.8);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.8)
+					ask.inject_it_in(new_context, $($cx)*.8)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.9);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.9)
+					ask.inject_it_in(new_context, $($cx)*.9)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.10);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.10)
+					ask.inject_it_in(new_context, $($cx)*.10)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.11);
 				let new_context = if ask.is_asked_for() {
-					ask.inject_it_in(new_context, $cx.11)
+					ask.inject_it_in(new_context, $($cx)*.11)
 				} else {
 					ask.do_not_inject_it_in(new_context)
 				};
@@ -1459,6 +1459,9 @@ macro_rules! cx {
             new_context
         }
     };
+	($($cx:ident),*$(,)?) => {
+		$crate::cx!(dangerously_specify_place $({$cx}),*)
+	};
 }
 
 // === Tests === //
@@ -1489,4 +1492,9 @@ fn tests() {
 
     let e = extract_mut::<str>(cx!(cx));
     let _ = (d, e);
+
+    let cx_2: (Cx<&mut u32>,) = produce();
+    let a = extract::<u32>(cx!(dangerously_specify_place { cx_2.0 }));
+    let b = extract::<u32>(cx!(dangerously_specify_place { cx_2.0 }));
+    let _ = (a, b);
 }
