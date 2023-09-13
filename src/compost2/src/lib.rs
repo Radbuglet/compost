@@ -1,8 +1,10 @@
 // === Context === //
 
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct NoValue;
 use NoValue as N;
 
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
 #[non_exhaustive]
 pub struct Context<
     A = N,
@@ -1342,7 +1344,7 @@ pub mod macro_internals {
 
 #[macro_export]
 macro_rules! cx {
-    ($cx:ident) => {
+    ($($cx:ident),+$(,)?) => {
         'a: {
             #[allow(unused_imports)]
             use $crate::macro_internals::{
@@ -1359,112 +1361,114 @@ macro_rules! cx {
                 $crate::macro_internals::assert_is_context(&res_bind.fake_make());
             }
 
-            // Ensure that the `$cx` identifier points to an appropriate context.
-            let cx_binds = (
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-                $crate::macro_internals::Binder::new(),
-            );
-            if false {
-                // Returns `!` so the borrow doesn't disrupt anything.
-                $crate::macro_internals::assert_is_context_and_bind(&$cx, &cx_binds);
-            }
+			// Construct the resulting context
+			let new_context = $crate::Context::from(());
 
-            // Construct our resulting context
-            let new_context = $crate::Context::from(());
+			$(
+				// Ensure that the `$cx` identifier points to an appropriate context.
+				let cx_binds = (
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+					$crate::macro_internals::Binder::new(),
+				);
+				if false {
+					// Returns `!` so the borrow doesn't disrupt anything.
+					$crate::macro_internals::assert_is_context_and_bind(&$cx, &cx_binds);
+				}
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.0);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.0)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.0);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.0)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.1);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.1)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.1);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.1)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.2);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.2)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.2);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.2)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.3);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.3)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.3);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.3)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.4);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.4)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.4);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.4)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.5);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.5)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.5);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.5)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.6);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.6)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.6);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.6)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.7);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.7)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.7);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.7)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.8);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.8)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.8);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.8)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.9);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.9)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.9);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.9)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.10);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.10)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.10);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.10)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
 
-            let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.11);
-            let new_context = if ask.is_asked_for() {
-                ask.inject_it_in(new_context, $cx.11)
-            } else {
-                ask.do_not_inject_it_in(new_context)
-            };
+				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.11);
+				let new_context = if ask.is_asked_for() {
+					ask.inject_it_in(new_context, $cx.11)
+				} else {
+					ask.do_not_inject_it_in(new_context)
+				};
+			)*
 
             new_context
         }
