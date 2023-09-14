@@ -158,6 +158,10 @@ pub mod macro_internals {
             false
         }
 
+        fn panic_if_not_injecting_it_in(&self) -> ! {
+            unreachable!();
+        }
+
         fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2, T>(
             &self,
             _curr_borrow_cx: Cx<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>,
@@ -179,6 +183,8 @@ pub mod macro_internals {
         fn is_asked_for(&self) -> bool {
             true
         }
+
+        fn panic_if_not_injecting_it_in(&self) {}
 
         fn inject_it_in<A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2>(
             &self,
@@ -1331,7 +1337,7 @@ pub mod macro_internals {
 #[macro_export]
 macro_rules! cx {
     (dangerously_specify_place $({$($cx:tt)*}),+$(,)?) => {
-        'a: {
+        #[allow(unreachable_code)] 'a: {
             #[allow(unused_imports)]
             use $crate::macro_internals::{
                 ContextAsksForResolverRejected as _, ContextAsksForResolverSuccess as _,
@@ -1368,11 +1374,13 @@ macro_rules! cx {
 				);
 				if false {
 					// Returns `!` so the borrow doesn't disrupt anything.
+					loop {}
 					$crate::macro_internals::assert_is_context_and_bind(&$($cx)*, &cx_binds);
 				}
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.0);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.0)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1380,6 +1388,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.1);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.1)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1387,6 +1396,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.2);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.2)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1394,6 +1404,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.3);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.3)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1401,6 +1412,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.4);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.4)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1408,6 +1420,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.5);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.5)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1415,6 +1428,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.6);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.6)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1422,6 +1436,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.7);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.7)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1429,6 +1444,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.8);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.8)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1436,6 +1452,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.9);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.9)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1443,6 +1460,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.10);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.10)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1450,6 +1468,7 @@ macro_rules! cx {
 
 				let ask = $crate::macro_internals::ContextAsksFor1::new(&res_bind, &cx_binds.11);
 				let new_context = if ask.is_asked_for() {
+					ask.panic_if_not_injecting_it_in();
 					ask.inject_it_in(new_context, $($cx)*.11)
 				} else {
 					ask.do_not_inject_it_in(new_context)
@@ -1481,7 +1500,7 @@ fn tests() {
         t.0
     }
 
-    let cx: Cx<&mut u32, &i32, &mut str> = produce();
+    let cx: Cx<&mut u32, &i32, &mut str, &mut f32> = produce();
     let a = extract::<u32>(cx!(cx));
     let b = extract::<u32>(cx!(cx));
     let _ = (a, b);
@@ -1497,4 +1516,18 @@ fn tests() {
     let a = extract::<u32>(cx!(dangerously_specify_place { cx_2.0 }));
     let b = extract::<u32>(cx!(dangerously_specify_place { cx_2.0 }));
     let _ = (a, b);
+
+    struct Lt<'a>([&'a (); 0]);
+
+    impl Drop for Lt<'_> {
+        fn drop(&mut self) {}
+    }
+
+    fn borrow<'a, T: 'a>(_cx: Cx<&'a mut T>) -> Lt<'a> {
+        unreachable!();
+    }
+
+    let a = borrow::<u32>(cx!(cx));
+    let b = borrow::<f32>(cx!(cx));
+    drop((a, b));
 }
