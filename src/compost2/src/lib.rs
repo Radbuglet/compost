@@ -1,3 +1,6 @@
+#![no_std]
+#![forbid(unsafe_code)]
+
 // === Context === //
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -109,9 +112,50 @@ impl<A, B, C, D, E, F, G, H, I, J, K, L> From<(A, B, C, D, E, F, G, H, I, J, K, 
 // === Macro Helpers === //
 
 pub mod macro_internals {
-    use std::ops::Deref;
+    use core::ops::Deref;
 
     use crate::{Cx, NoValue};
+
+    // Unreachable
+    pub fn falsely_produce_any_cx_for_placeholder<A, B, C, D, E, F, G, H, I, J, K, L>(
+    ) -> Cx<A, B, C, D, E, F, G, H, I, J, K, L> {
+        unreachable!(
+			"Compost built with the `compost_use_cx_placeholder` cfg, which replaces `cx!`'s expanded \
+			 output with a non-functional placeholder to reduce check times. To actually be able to \
+			 run the application, please rebuild it without the `compost_use_cx_placeholder` cfg flag."
+		);
+    }
+
+    pub fn falsely_produce_anything<T>() -> T {
+        unreachable!();
+    }
+
+    // assert_is_context
+    pub fn assert_is_context<A, B, C, D, E, F, G, H, I, J, K, L>(
+        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
+    ) -> ! {
+        unreachable!();
+    }
+
+    pub fn assert_is_context_and_bind<A, B, C, D, E, F, G, H, I, J, K, L>(
+        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
+        _binds: &(
+            Binder<A>,
+            Binder<B>,
+            Binder<C>,
+            Binder<D>,
+            Binder<E>,
+            Binder<F>,
+            Binder<G>,
+            Binder<H>,
+            Binder<I>,
+            Binder<J>,
+            Binder<K>,
+            Binder<L>,
+        ),
+    ) -> ! {
+        unreachable!();
+    }
 
     // Binder
     pub struct Binder<T>([T; 0]);
@@ -1305,35 +1349,9 @@ pub mod macro_internals {
             }
         }
     }
-
-    // assert_is_context
-    pub fn assert_is_context<A, B, C, D, E, F, G, H, I, J, K, L>(
-        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
-    ) -> ! {
-        unreachable!();
-    }
-
-    pub fn assert_is_context_and_bind<A, B, C, D, E, F, G, H, I, J, K, L>(
-        _cx: &Cx<A, B, C, D, E, F, G, H, I, J, K, L>,
-        _binds: &(
-            Binder<A>,
-            Binder<B>,
-            Binder<C>,
-            Binder<D>,
-            Binder<E>,
-            Binder<F>,
-            Binder<G>,
-            Binder<H>,
-            Binder<I>,
-            Binder<J>,
-            Binder<K>,
-            Binder<L>,
-        ),
-    ) -> ! {
-        unreachable!();
-    }
 }
 
+#[cfg(not(all(rust_analyzer, not(check_compost_borrows_in_rust_analyzer))))]
 #[macro_export]
 macro_rules! cx {
     (dangerously_specify_place $({$($cx:tt)*}),+$(,)?) => {
@@ -1490,6 +1508,32 @@ macro_rules! cx {
 			)*
 
             new_context
+        }
+    };
+	($($cx:ident),*$(,)?) => {
+		$crate::cx!(dangerously_specify_place $({$cx}),*)
+	};
+}
+
+#[cfg(all(rust_analyzer, not(check_compost_borrows_in_rust_analyzer)))]
+#[macro_export]
+macro_rules! cx {
+    (dangerously_specify_place $({$($cx:tt)*}),+$(,)?) => {
+        {
+			// Ensure that the provided input is actually a `Cx` object to perform some level of
+			// useful typechecking.
+            #[allow(unreachable_code)]
+			if false {
+				// Returns `!` so the borrow doesn't disrupt anything.
+				loop {}
+				$($crate::macro_internals::assert_is_context_and_bind(
+					&$($cx)*,
+					&$crate::macro_internals::falsely_produce_anything(),
+				);)*
+			}
+
+			// Ensure that the output is some `Cx` object to perform some level of useful typechecking.
+			$crate::macro_internals::falsely_produce_any_cx_for_placeholder()
         }
     };
 	($($cx:ident),*$(,)?) => {
